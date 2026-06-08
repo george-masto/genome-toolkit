@@ -1,0 +1,40 @@
+# Curated catalog of well-characterized human variants for trait/pharmacogenomic lookup.
+# PUBLIC REFERENCE DATA ONLY — this file contains no individual's genotype.
+#
+# Coordinates are GRCh38. They are display/fallback only: 06_trait_report.sh
+# resolves each variant by rsID against your own VCF, which is authoritative,
+# and flags any REF/ALT mismatch against this table.
+#
+# All "effect_allele" values are the ALT (derived) allele on the forward strand,
+# so a homozygous-reference genotype always means zero copies of the effect allele.
+#
+# Single-variant associations are simplifications. Effects describe statistical
+# associations in studied populations, NOT deterministic outcomes or diagnoses.
+#
+# Columns (tab-separated):
+# rsid	gene	chrom	pos	ref	alt	effect_allele	category	trait	effect
+rs429358	APOE	19	44908684	T	C	C	Health risk	Alzheimer's / cardiovascular	With rs7412 defines APOE haplotype; C here marks the ε4 allele (higher Alzheimer's & LDL risk)
+rs7412	APOE	19	44908822	C	T	T	Health risk	Alzheimer's / lipids	T marks the protective ε2 allele; interpret jointly with rs429358
+rs1801133	MTHFR	1	11796321	G	A	A	Nutrition	Folate metabolism (C677T)	A (677T) lowers MTHFR enzyme activity; may raise homocysteine, higher folate need
+rs1801131	MTHFR	1	11794419	T	G	G	Nutrition	Folate metabolism (A1298C)	G (1298C) mildly reduces MTHFR activity, especially combined with 677T
+rs671	ALDH2	12	111803962	G	A	A	Pharmacogenomics	Alcohol flush reaction	A (ALDH2*2) causes acetaldehyde build-up: facial flushing, low alcohol tolerance
+rs4988235	MCM6/LCT	2	135851076	G	A	A	Nutrition	Lactase persistence	A allele keeps lactase switched on into adulthood (can digest milk); GG = likely lactose intolerant
+rs762551	CYP1A2	15	74749576	C	A	A	Pharmacogenomics	Caffeine metabolism	AA (*1F/*1F) = fast caffeine metabolizer; C carriers clear caffeine more slowly
+rs1815739	ACTN3	11	66560624	C	T	T	Trait	Muscle fiber type (R577X)	T (577X) removes alpha-actinin-3; TT skews toward endurance, CC toward power/sprint
+rs1799945	HFE	6	26090951	C	G	G	Carrier/Health	Hereditary hemochromatosis (H63D)	G = H63D; milder iron-overload allele, risk mainly when combined with C282Y
+rs1800562	HFE	6	26092913	G	A	A	Carrier/Health	Hereditary hemochromatosis (C282Y)	A = C282Y; main hemochromatosis risk allele, esp. homozygous or with H63D
+rs9939609	FTO	16	53786615	T	A	A	Trait	Body weight / BMI	A allele associated with modestly higher BMI and appetite
+rs1799971	OPRM1	6	154360797	A	G	G	Pharmacogenomics	Opioid response	G (118G) alters mu-opioid receptor; linked to differing opioid/analgesia response
+rs53576	OXTR	3	8762685	A	G	G	Trait	Oxytocin receptor	GG associated in some studies with higher empathy/prosociality (weak, debated)
+rs4680	COMT	22	19963748	G	A	A	Trait	Dopamine / stress (Val158Met)	A (Met) = slower COMT, more prefrontal dopamine ("worrier"); G (Val) = "warrior"
+rs16969968	CHRNA5	15	78590583	G	A	A	Health risk	Nicotine dependence	A allele associated with heavier smoking and higher nicotine dependence
+rs12913832	HERC2/OCA2	15	28120472	A	G	G	Trait	Eye color	GG strongly associated with blue eyes; AA with brown
+rs1426654	SLC24A5	15	48134287	G	A	A	Trait	Skin pigmentation	A (Ala111Thr) = lighter skin; near-fixed in European ancestry
+rs17822931	ABCC11	16	48224287	C	T	T	Trait	Earwax & body odor	TT = dry earwax and reduced body odor (common in East Asian ancestry)
+rs713598	TAS2R38	7	141973545	C	G	C	Trait	Bitter taste (PTC)	C (Pro49) = taster of bitter PTC/PROP; GG = non-taster
+rs1800497	ANKK1/DRD2	11	113400106	G	A	A	Trait	Dopamine D2 (Taq1A)	A (A1) associated with lower D2 receptor density; studied in reward/addiction
+rs9923231	VKORC1	16	31096368	C	T	T	Pharmacogenomics	Warfarin dosing	T allele = greater warfarin sensitivity; lower dose typically needed
+rs4244285	CYP2C19	10	94781859	G	A	A	Pharmacogenomics	Clopidogrel / PPIs (*2)	A (*2) = loss of function; reduced clopidogrel activation (poor metabolizer)
+rs1799853	CYP2C9	10	94942290	C	T	T	Pharmacogenomics	Warfarin / NSAIDs (*2)	T (*2) = reduced CYP2C9 activity; slower metabolism of warfarin and some NSAIDs
+rs1057910	CYP2C9	10	94981296	A	C	C	Pharmacogenomics	Warfarin / NSAIDs (*3)	C (*3) = strongly reduced CYP2C9 activity; lower drug-clearance
+rs2814778	ACKR1/DARC	1	159204893	T	C	C	Trait	Duffy blood group	CC = Duffy-null: benign lower neutrophil counts and P. vivax malaria resistance

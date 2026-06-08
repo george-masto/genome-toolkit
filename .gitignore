@@ -1,0 +1,88 @@
+# ============================================================================
+#  PRIVACY FIRST — never commit personal genomic data to this repo.
+#  This repo is for SCRIPTS and TOOLS only. All raw data, variant calls,
+#  alignments, and derived per-individual results stay local and untracked.
+#
+#  The deny rules below are intentionally broad. If you think you need to
+#  commit something matching one of these, stop and reconsider — almost
+#  certainly you don't. See also the pre-commit guard in .githooks/.
+# ============================================================================
+
+# --- Raw sequence reads -----------------------------------------------------
+*.fq
+*.fastq
+*.fq.gz
+*.fastq.gz
+*.ubam
+
+# --- Alignments -------------------------------------------------------------
+*.sam
+*.bam
+*.cram
+*.bai
+*.crai
+*.csi
+
+# --- Variant calls & their indexes ------------------------------------------
+*.vcf
+*.vcf.gz
+*.gvcf
+*.g.vcf
+*.g.vcf.gz
+*.bcf
+*.tbi
+
+# --- Reference genomes & indexes (large; download, don't commit) ------------
+*.fa
+*.fna
+*.fasta
+*.fa.gz
+*.fasta.gz
+*.fai
+*.dict
+*.amb
+*.ann
+*.bwt
+*.pac
+*.sa
+*.bwt.2bit.64
+*.0123
+
+# --- Genomic interval / table data that may carry personal calls ------------
+*.bed.gz
+*.gff
+*.gff3
+*.gtf
+
+# --- Vendor reports (contain personal health interpretations) ---------------
+reports/
+*.report.pdf
+
+# --- All analysis / pipeline output (per-individual results live here) ------
+analysis/
+output/
+results/
+work/
+tmp/
+*.mosdepth.*
+*.flagstat
+*.idxstats
+
+# --- Belt-and-suspenders: anything carrying the sample id or owner name -----
+*SAMPLE_ID*
+*Mastorakos*
+
+# --- Environment / OS noise -------------------------------------------------
+.DS_Store
+.env
+.venv/
+__pycache__/
+*.pyc
+conda-env/
+*.log
+
+# ============================================================================
+#  Explicitly ALLOWED (public reference data — not personal):
+#    assets/traits/*.tsv  curated public rsID→trait maps (committed on purpose)
+#  These are *.tsv and not matched by any deny rule above.
+# ============================================================================
