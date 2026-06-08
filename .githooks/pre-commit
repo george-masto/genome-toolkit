@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# ============================================================================
+# pre-commit guard — refuse to commit personal genomic data.
+#
+# Belt-and-suspenders alongside .gitignore. Blocks staged files that look like
+# sequence/variant/alignment data (by extension), that carry the sample id, or
+# whose first bytes look like FASTQ/VCF/BAM/CRAM content. Install with
+# scripts/install_git_hooks.sh (sets core.hooksPath to .githooks).
+# ============================================================================
+set -euo pipefail
+
+block=0
+# Patterns that must never be committed (extensions + sample id + report dir).
+deny_re='\.(fq|fastq|fq\.gz|fastq\.gz|sam|bam|cram|bai|crai|csi|vcf|vcf\.gz|gvcf|g\.vcf\.gz|bcf|tbi|fa|fasta|fna|fai|dict)$|SQ2MH368|Mastorakos|^reports/'
+
+while IFS= read -r f; do
+  [[ -z "$f" ]] && continue
+  if printf '%s\n' "$f" | grep -Eiq "$deny_re"; then
+    echo "  ✗ BLOCKED (looks like genomic data / personal report): $f" >&2
+    block=1
+    continue
+  fi
+  # Content sniff: first line of staged blob.
+  first="$(git show ":$f" 2>/dev/null | head -c 200 | head -1 || true)"
+  if printf '%s' "$first" | grep -Eq '^##fileformat=VCF|^@(HD|SQ|RG)\b|^BAM|^CRAM'; then
+    echo "  ✗ BLOCKED (file content looks like VCF/BAM/CRAM): $f" >&2
+    block=1
+  fi
+done < <(git diff --cached --name-only --diff-filter=AM)
+
+if [[ $block -eq 1 ]]; then
+  cat >&2 <<'MSG'
+
+  Commit rejected: one or more staged files look like personal genomic data.
+  This repo is for scripts/tools only. If this is a false positive, commit with
+  --no-verify (but be certain it contains no individual genotype data).
+MSG
+  exit 1
+fi

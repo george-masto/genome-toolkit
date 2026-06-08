@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# ============================================================================
+# common.sh — shared config, paths, and helpers for all pipeline scripts.
+#
+# Source this from every script:  source "$(dirname "$0")/lib/common.sh"
+#
+# It auto-detects the input data files by glob, so nothing is hard-coded to
+# one person's filenames. Override any path with an environment variable.
+# ============================================================================
+set -euo pipefail
+
+# --- Locate repo + data dirs ------------------------------------------------
+# REPO_ROOT = the git repo (one level up from scripts/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# DATA_DIR = where the raw .fq.gz / .vcf.gz live. Defaults to repo root
+# (that's where sequencing.com's download landed), override with env var.
+DATA_DIR="${DATA_DIR:-$REPO_ROOT}"
+
+# OUT_DIR = all generated output. Gitignored. Override with env var.
+OUT_DIR="${OUT_DIR:-$REPO_ROOT/analysis}"
+
+# ASSETS_DIR = committed public reference data (rsID maps, etc.)
+ASSETS_DIR="$REPO_ROOT/assets"
+
+# REF_DIR = downloaded reference genome cache (gitignored)
+REF_DIR="${REF_DIR:-$REPO_ROOT/reference}"
+
+mkdir -p "$OUT_DIR"
+
+# --- Pretty logging ---------------------------------------------------------
+_c_blue='\033[0;34m'; _c_green='\033[0;32m'; _c_yellow='\033[0;33m'
+_c_red='\033[0;31m';  _c_dim='\033[2m';      _c_off='\033[0m'
+log()   { printf "${_c_blue}==>${_c_off} %s\n" "$*" >&2; }
+ok()    { printf "${_c_green}  ✓${_c_off} %s\n" "$*" >&2; }
+warn()  { printf "${_c_yellow}  ! ${_c_off}%s\n" "$*" >&2; }
+die()   { printf "${_c_red}  ✗ %s${_c_off}\n" "$*" >&2; exit 1; }
+hr()    { printf "${_c_dim}%s${_c_off}\n" "----------------------------------------------------------------------" >&2; }
+
+# --- Tool checks ------------------------------------------------------------
+have()         { command -v "$1" >/dev/null 2>&1; }
+require_tool() { have "$1" || die "Required tool '$1' not found. Run scripts/00_install_tools.sh"; }
+
+# --- Auto-detect the input files (first match of each glob) -----------------
+# Use nullglob so a missing file yields an empty string instead of the pattern.
+shopt -s nullglob
+_first() { local a=("$@"); [[ ${#a[@]} -gt 0 ]] && printf '%s' "${a[0]}" || printf ''; }
+
+FASTQ_R1="${FASTQ_R1:-$(_first "$DATA_DIR"/*.1.fq.gz "$DATA_DIR"/*_1.fq.gz "$DATA_DIR"/*_R1*.f*q.gz)}"
+FASTQ_R2="${FASTQ_R2:-$(_first "$DATA_DIR"/*.2.fq.gz "$DATA_DIR"/*_2.fq.gz "$DATA_DIR"/*_R2*.f*q.gz)}"
+VCF_SNP="${VCF_SNP:-$(_first "$DATA_DIR"/*snp-indel*.vcf.gz "$DATA_DIR"/*.hard-filtered.vcf.gz)}"
+VCF_CNV="${VCF_CNV:-$(_first "$DATA_DIR"/*.cnv.vcf.gz "$DATA_DIR"/*cnv*.vcf.gz)}"
+VCF_SV="${VCF_SV:-$(_first "$DATA_DIR"/*.sv.vcf.gz "$DATA_DIR"/*sv*.vcf.gz)}"
+shopt -u nullglob
+
+# --- Derived: sample name + reference build (read from the VCF itself) ------
+# Cached so we don't re-shell out repeatedly.
+sample_name() {
+  if [[ -n "${_SAMPLE_NAME:-}" ]]; then printf '%s' "$_SAMPLE_NAME"; return; fi
+  if [[ -n "$VCF_SNP" && -f "$VCF_SNP" ]] && have bcftools; then
+    _SAMPLE_NAME="$(bcftools query -l "$VCF_SNP" 2>/dev/null | head -1)"
+  fi
+  printf '%s' "${_SAMPLE_NAME:-unknown}"
+}
+
+ref_build() {
+  if [[ -n "${_REF_BUILD:-}" ]]; then printf '%s' "$_REF_BUILD"; return; fi
+  if [[ -n "$VCF_SNP" && -f "$VCF_SNP" ]]; then
+    _REF_BUILD="$(gzcat "$VCF_SNP" 2>/dev/null | grep -m1 '^##reference=' | sed 's/##reference=//' || true)"
+  fi
+  printf '%s' "${_REF_BUILD:-unknown}"
+}
+
+# Contig naming style: "chr1" vs "1". Needed so downstream regions match.
+chrom_prefix() {
+  if [[ -n "${_CHR_PREFIX+x}" ]]; then printf '%s' "$_CHR_PREFIX"; return; fi
+  _CHR_PREFIX=""
+  if [[ -n "$VCF_SNP" && -f "$VCF_SNP" ]] && have bcftools; then
+    if bcftools view -h "$VCF_SNP" 2>/dev/null | grep -q '^##contig=<ID=chr'; then _CHR_PREFIX="chr"; fi
+  fi
+  printf '%s' "$_CHR_PREFIX"
+}
+
+# Print a one-line summary of what was auto-detected.
+show_inputs() {
+  hr
+  log "Detected inputs (DATA_DIR=$DATA_DIR)"
+  printf '    %-12s %s\n' "Sample:"   "$(sample_name)"       >&2
+  printf '    %-12s %s\n' "Reference:" "$(ref_build)"        >&2
+  printf '    %-12s %s\n' "FASTQ R1:"  "${FASTQ_R1:-<none>}" >&2
+  printf '    %-12s %s\n' "FASTQ R2:"  "${FASTQ_R2:-<none>}" >&2
+  printf '    %-12s %s\n' "SNP/indel:" "${VCF_SNP:-<none>}"  >&2
+  printf '    %-12s %s\n' "CNV:"       "${VCF_CNV:-<none>}"  >&2
+  printf '    %-12s %s\n' "SV:"        "${VCF_SV:-<none>}"   >&2
+  hr
+}
