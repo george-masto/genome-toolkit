@@ -66,8 +66,10 @@ work/
 tmp/
 genome_insights*.json    # structured per-individual insights (served by MCP)
 
-# --- MCP server virtualenv (local, not tracked) -----------------------------
+# --- MCP server virtualenv + secrets (local, not tracked) -------------------
 mcp/.venv/
+mcp/.mcp_token
+logs/
 *.mosdepth.*
 *.flagstat
 *.idxstats

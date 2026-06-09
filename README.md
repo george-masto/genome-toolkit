@@ -126,7 +126,8 @@ It distills everything into `analysis/genome_insights.json` and exposes a local
 port is ever opened and nothing leaves your machine**. The agent gets tools like
 `check_drug("clopidogrel")`, `get_pharmacogenomics()`, `search_clinvar(gene=…)`,
 and a live `lookup_variant(rsID/region)`. Full setup + per-client config in
-[`mcp/README.md`](mcp/README.md).
+[`mcp/README.md`](mcp/README.md). To run it always-on for a remote agent over
+**Tailscale**, see [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ```
 "Any genetic concern with clopidogrel?"  →  check_drug → CYP2C19 *1/*2,

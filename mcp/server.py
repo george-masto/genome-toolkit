@@ -261,5 +261,51 @@ def res_traits() -> str:
     return json.dumps(get_traits(), indent=2)
 
 
+def _run_http():
+    """Serve over streamable-HTTP. Bind to a Tailscale IP (or localhost) so the
+    endpoint is reachable only inside your tailnet. Optional bearer-token auth
+    via MCP_AUTH_TOKEN for defense in depth on top of the network boundary."""
+    import uvicorn
+    from mcp.server.transport_security import TransportSecuritySettings
+    host = os.environ.get("MCP_HOST", "127.0.0.1")
+    port = int(os.environ.get("MCP_PORT", "8787"))
+    token = os.environ.get("MCP_AUTH_TOKEN", "").strip()
+
+    # FastMCP's DNS-rebinding Host check is a browser-localhost defense; it 421s
+    # any non-localhost Host (e.g. a Tailscale IP). Our clients are token-authed
+    # agents on a private tailnet, not browsers — so either pin allowed hosts via
+    # MCP_ALLOWED_HOSTS or disable the check (network scope + token are the guard).
+    allowed = os.environ.get("MCP_ALLOWED_HOSTS", "").strip()
+    if allowed:
+        mcp.settings.transport_security = TransportSecuritySettings(
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=[h.strip() for h in allowed.split(",") if h.strip()],
+            allowed_origins=["*"])
+    else:
+        mcp.settings.transport_security = TransportSecuritySettings(
+            enable_dns_rebinding_protection=False)
+    app = mcp.streamable_http_app()  # MCP mounted at /mcp
+    if token:
+        from starlette.middleware.base import BaseHTTPMiddleware
+        from starlette.responses import JSONResponse
+
+        class _Bearer(BaseHTTPMiddleware):
+            async def dispatch(self, request, call_next):
+                if request.headers.get("authorization", "") != f"Bearer {token}":
+                    return JSONResponse({"error": "unauthorized"}, status_code=401)
+                return await call_next(request)
+
+        app.add_middleware(_Bearer)
+        print(f"[genome-toolkit] HTTP on {host}:{port}/mcp (bearer-token auth ON)", flush=True)
+    else:
+        print(f"[genome-toolkit] HTTP on {host}:{port}/mcp "
+              f"(no token — relying on network scope; set MCP_AUTH_TOKEN to add one)", flush=True)
+    uvicorn.run(app, host=host, port=port, log_level="warning")
+
+
 if __name__ == "__main__":
-    mcp.run()
+    transport = os.environ.get("MCP_TRANSPORT", "stdio").lower()
+    if transport in ("http", "streamable-http"):
+        _run_http()
+    else:
+        mcp.run()
