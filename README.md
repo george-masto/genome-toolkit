@@ -84,6 +84,7 @@ scripts/
 ├── 07_pgx_report.sh         CPIC pharmacogenomic profile card
 ├── 10_align_from_fastq.sh   FROM SCRATCH: FASTQ → CRAM → coverage (hours)
 ├── 20_clinvar_annotate.sh   full ClinVar screen, every tier, star-ranked
+├── 50_serve_mcp.sh          serve your insights to any AI agent over MCP
 ├── run_all.sh               the quick-start chain (01→07)
 ├── install_git_hooks.sh     turn on the privacy pre-commit guard
 └── lib/common.sh            shared config + auto-detection of your files
@@ -110,6 +111,28 @@ scripts/10_align_from_fastq.sh
 
 ---
 
+## Serve it to your AI agent (MCP)
+
+Turn your processed genome into a private knowledge source any agent can query —
+[Claude Desktop](https://modelcontextprotocol.io), Claude Code, Cursor, or
+anything that speaks [MCP](https://modelcontextprotocol.io):
+
+```bash
+scripts/50_serve_mcp.sh        # builds a structured insights file + prints the config to paste
+```
+
+It distills everything into `analysis/genome_insights.json` and exposes a local
+**stdio** MCP server — your agent launches it as a subprocess, so **no network
+port is ever opened and nothing leaves your machine**. The agent gets tools like
+`check_drug("clopidogrel")`, `get_pharmacogenomics()`, `search_clinvar(gene=…)`,
+and a live `lookup_variant(rsID/region)`. Full setup + per-client config in
+[`mcp/README.md`](mcp/README.md).
+
+```
+"Any genetic concern with clopidogrel?"  →  check_drug → CYP2C19 *1/*2,
+                                             intermediate metabolizer → prefer prasugrel/ticagrelor
+```
+
 ## How the data flows
 
 ```
@@ -119,7 +142,8 @@ scripts/10_align_from_fastq.sh
                                             ├─04─► QC summary
                                             ├─06─► trait report
                                             ├─07─► pharmacogenomic card
-                                            └─20─► ClinVar screen
+                                            ├─20─► ClinVar screen
+                                            └─50─► genome_insights.json ─► MCP server ─► your agent
 ```
 
 Most analyses (the whole right side) run in minutes from the gVCF. Only the
