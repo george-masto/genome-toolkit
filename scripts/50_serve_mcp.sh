@@ -7,10 +7,11 @@
 # (Claude Desktop / Claude Code / Cursor). Everything stays local — the server
 # speaks stdio and never opens a network port.
 #
-#   scripts/50_serve_mcp.sh            # setup + build + print connection config
-#   scripts/50_serve_mcp.sh --rebuild  # just rebuild genome_insights.json
-#   scripts/50_serve_mcp.sh --run      # run the server in the foreground (stdio)
-#   scripts/50_serve_mcp.sh --inspect  # launch the MCP Inspector UI to test it
+#   scripts/50_serve_mcp.sh             # setup + build + print connection config
+#   scripts/50_serve_mcp.sh --rebuild   # just rebuild genome_insights.json
+#   scripts/50_serve_mcp.sh --embeddings# build the LOCAL semantic-search index
+#   scripts/50_serve_mcp.sh --run       # run the server in the foreground (stdio)
+#   scripts/50_serve_mcp.sh --inspect   # launch the MCP Inspector UI to test it
 # ============================================================================
 source "$(dirname "$0")/lib/common.sh"
 require_tool bcftools
@@ -34,6 +35,15 @@ build_insights() {
   [[ -f "$OUT_DIR/variants.vcf.gz" ]] || die "No variants.vcf.gz — run scripts/run_all.sh first."
   log "Building structured insights…"
   OUT_DIR="$OUT_DIR" "$PYBIN" "$MCP_DIR/build_insights.py"
+}
+
+build_embeddings() {
+  [[ -f "$INSIGHTS" ]] || build_insights
+  log "Installing local embedding deps (one-time)…"
+  "$PYBIN" -m pip install -q -r "$MCP_DIR/requirements-embeddings.txt"
+  log "Building LOCAL semantic-search index (model downloads once, then offline)…"
+  OUT_DIR="$OUT_DIR" "$PYBIN" "$MCP_DIR/build_embeddings.py"
+  ok "Semantic search ready — the server's semantic_search tool is now live."
 }
 
 print_config() {
@@ -67,7 +77,8 @@ EOF
 }
 
 case "${1:-}" in
-  --rebuild) ensure_venv; build_insights ;;
+  --rebuild)    ensure_venv; build_insights ;;
+  --embeddings) ensure_venv; build_embeddings ;;
   --run)     ensure_venv; [[ -f "$INSIGHTS" ]] || build_insights; exec "$PYBIN" "$MCP_DIR/server.py" ;;
   --inspect) ensure_venv; [[ -f "$INSIGHTS" ]] || build_insights
              log "Launching MCP Inspector (needs npx)…"

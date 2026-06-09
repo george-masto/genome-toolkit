@@ -189,6 +189,62 @@ def lookup_variant(query: str) -> list:
     return out
 
 
+# ---------------------------------------------------- semantic search ---------
+# Loaded lazily on first use: the embedding model + the prebuilt local index.
+_EMB = {"ready": False, "model": None, "vecs": None, "metas": None}
+
+
+def _ensure_embeddings():
+    if _EMB["ready"]:
+        return True
+    npz = INSIGHTS_PATH.parent / "genome_embeddings.npz"
+    jsonl = INSIGHTS_PATH.parent / "genome_embeddings.jsonl"
+    if not npz.exists() or not jsonl.exists():
+        return False
+    try:
+        import numpy as np
+        from fastembed import TextEmbedding
+    except ImportError:
+        return False
+    d = np.load(npz, allow_pickle=True)
+    _EMB["vecs"] = d["vectors"]
+    _EMB["metas"] = [json.loads(line) for line in jsonl.read_text().splitlines()]
+    _EMB["model"] = TextEmbedding(model_name=str(d["model"]))
+    _EMB["np"] = np
+    _EMB["ready"] = True
+    return True
+
+
+@mcp.tool()
+def semantic_search(query: str, top_k: int = 10, source: str = "", min_stars: int = 0) -> dict:
+    """Fuzzy / meaning-based search over YOUR genome findings — finds matches by
+    concept, not keywords. Use for open-ended questions where the exact words
+    won't appear in the data, e.g. 'connective tissue', 'heart rhythm',
+    'serotonin', 'inflammation'. Optional filters: source in
+    {clinvar, pharmacogenomics, trait}, and min_stars (ClinVar confidence 0-4).
+    For an exact rsID/gene/drug, prefer lookup_variant / check_drug / search_clinvar."""
+    if not _ensure_embeddings():
+        return {"error": "Semantic index not built. Run: scripts/50_serve_mcp.sh --embeddings"}
+    np = _EMB["np"]
+    q = np.asarray(next(iter(_EMB["model"].embed([query]))), dtype="float32")
+    q /= (np.linalg.norm(q) + 1e-9)
+    sims = _EMB["vecs"] @ q
+    order = np.argsort(-sims)
+    out = []
+    for i in order:
+        m = _EMB["metas"][int(i)]
+        if source and m.get("source") != source:
+            continue
+        if m.get("stars", 99) < min_stars:
+            continue
+        out.append({"score": round(float(sims[int(i)]), 3), **m})
+        if len(out) >= top_k:
+            break
+    return {"query": query, "matches": out,
+            "note": "Semantically ranked over your findings. Educational only; "
+                    "confirm anything actionable with a clinician."}
+
+
 # ------------------------------------------------------------ resources -------
 @mcp.resource("genome://summary")
 def res_summary() -> str:

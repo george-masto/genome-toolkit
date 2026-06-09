@@ -1,0 +1,5 @@
+# Optional — only needed for the semantic_search tool (local embeddings).
+# Kept separate so the base MCP server stays lightweight.
+# fastembed runs ONNX on CPU (no torch); the model is public + downloaded once.
+numpy>=1.24
+fastembed>=0.3.0
