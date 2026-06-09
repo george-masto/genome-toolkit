@@ -93,13 +93,19 @@ tool then ranks your findings by meaning. Rebuild it after re-processing data.
 - "Summarize my pharmacogenomic risks." → `get_pharmacogenomics(actionable_only=True)`
 - "Do I carry anything pathogenic in DYSF?" → `search_clinvar(gene="DYSF")`
 
-## Remote hosting (advanced, discouraged)
+## Remote / always-on (Tailscale)
 
-This is genomic data — keep it local. If you genuinely need a remote server
-(e.g. a shared agent), do **not** expose it unauthenticated. The MCP SDK
-supports a streamable-HTTP transport; put it behind a reverse proxy with auth
-and TLS, bind to localhost + an SSH tunnel, or use your client's remote-MCP
-gateway. Treat the endpoint like a password to your medical record.
+To run this on an always-on box and reach it from another machine's agent, serve
+over HTTP bound to your **Tailscale IP** (tailnet-only) with a bearer token:
+
+```bash
+scripts/50_serve_mcp.sh --http              # foreground, prints URL + token
+scripts/50_serve_mcp.sh --install-service   # always-on launchd service
+```
+
+Full transfer + deployment walkthrough: **[../docs/DEPLOY.md](../docs/DEPLOY.md)**.
+Do **not** bind to `0.0.0.0` (that exposes it on the LAN); `--http` binds to the
+Tailscale IP on purpose. Treat the URL+token like access to a medical record.
 
 ## ⚠️ Disclaimer
 
