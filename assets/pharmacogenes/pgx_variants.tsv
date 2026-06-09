@@ -1,0 +1,47 @@
+# Curated pharmacogene catalog for 07_pgx_report.sh — CPIC/PharmGKB genes only.
+# PUBLIC REFERENCE DATA — no individual's genotype here.
+#
+# Only star-allele-defining variants that a single-sample short-read VCF can
+# read reliably. This is NOT a full clinical PGx panel: CYP2D6 cannot be fully
+# typed from this data (needs copy-number + CYP2D7-paralog-aware tools), so it
+# is reported as "incomplete". Confirm anything actionable against CPIC
+# (cpicpgx.org) with a pharmacist before use.
+#
+# A variant absent from your VCF = homozygous reference = the *1 (normal)
+# allele, i.e. zero copies of the defining variant.
+#
+# function:  no_function | decreased | increased | slow | deficient | special
+# model (per gene): score | vkorc1 | cyp4f2 | slco | lof | ugt | cyp3a5 |
+#                   nat2 | ifnl3 | g6pd | cyp2d6_partial
+#
+# columns: gene	rsid	defines	function	model	drugs	action
+CYP2C19	rs4244285	CYP2C19*2	no_function	score	clopidogrel; (es)citalopram; PPIs; voriconazole	Intermediate/poor metabolizers activate clopidogrel poorly — prasugrel/ticagrelor preferred after PCI/ACS.
+CYP2C19	rs4986893	CYP2C19*3	no_function	score	clopidogrel; (es)citalopram; PPIs; voriconazole	As above.
+CYP2C19	rs12248560	CYP2C19*17	increased	score	clopidogrel; (es)citalopram; PPIs	*17 increases activity (rapid/ultrarapid) — can lower SSRI exposure.
+CYP2C9	rs1799853	CYP2C9*2	decreased	score	warfarin; NSAIDs; phenytoin; siponimod	Reduced clearance — lower warfarin/NSAID exposure; combine with VKORC1 for warfarin dose.
+CYP2C9	rs1057910	CYP2C9*3	no_function	score	warfarin; NSAIDs; phenytoin	Strongly reduced activity.
+CYP2C9	rs7900194	CYP2C9*8	decreased	score	warfarin; NSAIDs; phenytoin	Reduced activity (more common in African ancestry).
+CYP2C9	rs28371686	CYP2C9*5	decreased	score	warfarin; NSAIDs; phenytoin	Reduced activity.
+VKORC1	rs9923231	VKORC1 -1639G>A	special	vkorc1	warfarin; acenocoumarol; phenprocoumon	The A (-1639) allele lowers VKORC1 — more warfarin-sensitive, lower dose. Use a genotype-guided algorithm.
+CYP4F2	rs2108622	CYP4F2*3	special	cyp4f2	warfarin	*3 reduces vitamin-K clearance — slightly HIGHER warfarin dose. Minor; folded into dosing algorithms.
+SLCO1B1	rs4149056	SLCO1B1*5	decreased	slco	simvastatin (and other statins)	Decreased/poor function raises statin exposure and myopathy risk — prefer low-risk statins or lower dose.
+TPMT	rs1800462	TPMT*2	no_function	lof	azathioprine; mercaptopurine; thioguanine	Reduced TPMT → thiopurine toxicity; intermediate/poor metabolizers need big dose reductions.
+TPMT	rs1800460	TPMT*3B	no_function	lof	azathioprine; mercaptopurine; thioguanine	As above.
+TPMT	rs1142345	TPMT*3C	no_function	lof	azathioprine; mercaptopurine; thioguanine	As above.
+NUDT15	rs116855232	NUDT15*3	no_function	lof	azathioprine; mercaptopurine; thioguanine	Reduced NUDT15 → severe thiopurine myelosuppression; dose reduce.
+DPYD	rs3918290	DPYD*2A	no_function	lof	fluorouracil; capecitabine; tegafur	No-function → risk of severe/fatal fluoropyrimidine toxicity; large dose reduction or avoid.
+DPYD	rs55886062	DPYD*13	no_function	lof	fluorouracil; capecitabine	As above.
+DPYD	rs67376798	DPYD c.2846A>T	decreased	lof	fluorouracil; capecitabine	Decreased function → reduce fluoropyrimidine dose.
+DPYD	rs56038477	DPYD HapB3	decreased	lof	fluorouracil; capecitabine	Decreased function → reduce dose.
+UGT1A1	rs887829	UGT1A1*80 (tags *28)	decreased	ugt	irinotecan; atazanavir	*28/*28 (and often *1/*28) reduce UGT1A1 → irinotecan toxicity; benign Gilbert's hyperbilirubinemia.
+CYP3A5	rs776746	CYP3A5*3	no_function	cyp3a5	tacrolimus	Expressers (*1) clear tacrolimus fast and need higher doses; *3/*3 non-expressers use standard dosing.
+NAT2	rs1801280	NAT2*5	slow	nat2	isoniazid; hydralazine; sulfonamides; amifampridine; caffeine	Slow acetylators get higher drug levels → more toxicity (e.g. INH hepatotoxicity/neuropathy).
+NAT2	rs1799930	NAT2*6	slow	nat2	isoniazid; hydralazine; sulfonamides; caffeine	As above.
+NAT2	rs1799931	NAT2*7	slow	nat2	isoniazid; hydralazine; sulfonamides; caffeine	As above.
+IFNL3	rs12979860	IL28B genotype	special	ifnl3	peginterferon + ribavirin (hepatitis C)	CC favorable; CT/TT less responsive. Largely obsolete — modern direct-acting antivirals cure regardless.
+G6PD	rs1050828	G6PD A- (V68M)	deficient	g6pd	primaquine; rasburicase; dapsone; high-dose sulfonamides	Deficiency → oxidative hemolysis with these drugs and fava beans. X-linked; confirm by enzyme assay.
+G6PD	rs5030868	G6PD Mediterranean	deficient	g6pd	primaquine; rasburicase; dapsone; sulfonamides	As above.
+G6PD	rs1050829	G6PD A (N126D)	deficient	g6pd	primaquine; rasburicase; dapsone	A component; with A- contributes to deficiency.
+CYP2D6	rs3892097	CYP2D6*4	no_function	cyp2d6_partial	codeine; tramadol; many antidepressants/antipsychotics; tamoxifen; atomoxetine	CYP2D6 cannot be fully typed here (copy-number/paralog). Use a dedicated CYP2D6 assay if these drugs matter.
+CYP2D6	rs1065852	CYP2D6*10	decreased	cyp2d6_partial	codeine; tramadol; antidepressants; tamoxifen	Incomplete typing — see above.
+CYP2D6	rs28371725	CYP2D6*41	decreased	cyp2d6_partial	codeine; tramadol; antidepressants; tamoxifen	Incomplete typing — see above.

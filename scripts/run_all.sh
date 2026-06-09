@@ -6,11 +6,12 @@
 source "$(dirname "$0")/lib/common.sh"
 here="$(dirname "$0")"
 
-log "1/5  inspect inputs";        "$here/01_inspect.sh"
-log "2/5  index VCFs";            "$here/02_index_vcfs.sh"
-log "3/5  extract variants";      "$here/03_extract_variants.sh"
-log "4/5  QC stats";              "$here/04_vcf_stats.sh"
-log "5/5  trait report";          "$here/06_trait_report.sh"
+log "1/6  inspect inputs";        "$here/01_inspect.sh"
+log "2/6  index VCFs";            "$here/02_index_vcfs.sh"
+log "3/6  extract variants";      "$here/03_extract_variants.sh"
+log "4/6  QC stats";              "$here/04_vcf_stats.sh"
+log "5/6  trait report";          "$here/06_trait_report.sh"
+log "6/6  pharmacogenomics";      "$here/07_pgx_report.sh"
 
 hr
 ok "Quick-start complete. Outputs are in: $OUT_DIR  (gitignored)"
