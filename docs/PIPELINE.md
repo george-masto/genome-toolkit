@@ -62,6 +62,20 @@ hom-ref blocks were stripped in step 03). The script flags any REF/ALT mismatch
 between the catalog and your data, so a mis-curated row can't be silently
 misread.
 
+### 07 — pharmacogenomic profile
+Screens a curated **CPIC pharmacogene** catalog
+(`assets/pharmacogenes/pgx_variants.tsv`) — only star-allele-defining variants a
+single-sample short-read VCF can read reliably — and predicts a
+metabolizer/function phenotype per gene (activity-score model for the CYP genes,
+bespoke rules for VKORC1, UGT1A1, CYP3A5, NAT2, SLCO1B1, etc.). Outputs a
+pharmacist-ready profile card with CPIC drug implications, separating
+non-default phenotypes from the reassuring normals.
+
+> **CYP2D6 is reported as incomplete on purpose.** Its star alleles depend on
+> copy number and the CYP2D7 pseudogene, which short reads can't resolve — a
+> dedicated CNV/paralog-aware caller (Cyrius, Aldy) on the CRAM is required for a
+> true CYP2D6 phenotype. This is one reason to run step 10.
+
 ### 10 — re-align from scratch (optional, heavy)
 `fastp` → `bwa-mem2 mem` → `samtools fixmate|sort|markdup` → **CRAM**, then
 `mosdepth` coverage. Downloads the GRCh38 no-alt analysis set. Several hours and
