@@ -13,7 +13,7 @@
 source "$(dirname "$0")/lib/common.sh"
 require_tool bcftools
 
-[[ -n "$VCF_SNP" && -f "$VCF_SNP" ]] || die "No SNP/indel gVCF detected."
+require_vcf_snp   # dies with an actionable message (lists DATA_DIR's .vcf.gz) if none
 [[ -f "$VCF_SNP.tbi" ]] || { log "Indexing first…"; tabix -p vcf "$VCF_SNP"; }
 
 ALL="$OUT_DIR/variants.vcf.gz"

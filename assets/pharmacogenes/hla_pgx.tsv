@@ -1,0 +1,15 @@
+# HLA pharmacogenetic risk alleles — CPIC/FDA drug-hypersensitivity associations.
+# PUBLIC REFERENCE DATA — no individual's genotype here.
+#
+# Used by 13_hla.sh to flag which T1K-typed 2-field HLA alleles carry a drug
+# hypersensitivity risk. Presence of the allele (carrier, dominant risk) is what
+# matters — not zygosity. These are among the highest-value pharmacogenetic
+# results and are completely invisible to a SNP/indel VCF.
+#
+# columns: allele	drugs	implication
+HLA-B*57:01	abacavir; flucloxacillin	Abacavir CONTRAINDICATED (CPIC, FDA boxed warning) — abacavir hypersensitivity syndrome. Also flucloxacillin liver injury risk.
+HLA-B*15:02	carbamazepine; oxcarbazepine; phenytoin; fosphenytoin	Avoid carbamazepine & oxcarbazepine (CPIC); caution phenytoin — Stevens-Johnson syndrome / toxic epidermal necrolysis (SJS/TEN). Highest risk in South/East Asian ancestry.
+HLA-A*31:01	carbamazepine; oxcarbazepine	Carbamazepine hypersensitivity (SJS/TEN, DRESS, maculopapular exanthema) — consider an alternative (CPIC).
+HLA-B*58:01	allopurinol	Allopurinol severe cutaneous adverse reaction (SCAR/SJS/TEN/DRESS) risk (CPIC) — consider alternative urate-lowering therapy.
+HLA-B*13:01	dapsone	Dapsone hypersensitivity syndrome risk (CPIC).
+HLA-A*32:01	vancomycin	HLA-A*32:01 associated with vancomycin DRESS.

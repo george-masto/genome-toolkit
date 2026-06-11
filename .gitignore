@@ -66,6 +66,11 @@ work/
 tmp/
 genome_insights*.json    # structured per-individual insights (served by MCP)
 
+# --- Third-party callers cloned by the second-pass scripts (code, not data) -
+#  11_cyp2d6.sh / 15_smn.sh / 16_gba.sh clone Cyrius / SMNCopyNumberCaller /
+#  Gauchian here. Upstream code — keep it out of this repo's history.
+tools/
+
 # --- MCP server virtualenv + secrets (local, not tracked) -------------------
 mcp/.venv/
 mcp/.mcp_token

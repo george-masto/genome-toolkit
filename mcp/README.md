@@ -61,6 +61,16 @@ scripts/50_serve_mcp.sh --inspect      # opens the MCP Inspector UI (needs npx)
 | `search_clinvar(gene?, tier?, min_stars?)` | ClinVar findings you carry, by tier/gene/confidence |
 | `lookup_variant(query)` | **live** lookup of any rsID / position / region in your VCF |
 | `semantic_search(query, …)` | **meaning-based** search over your findings (needs the local index) |
+| `get_second_pass_status()` | which CRAM-based specialty callers have run vs are pending |
+| `get_carrier_status()` | recessive carrier results — SMN1/2 (SMA), GBA (Gaucher) |
+| `get_repeat_expansions()` | repeat-disorder genotypes — Huntington, C9orf72, Fragile-X, SCAs… |
+| `get_hla()` | HLA drug-hypersensitivity alleles (abacavir, carbamazepine, allopurinol) |
+| `get_mitochondrial()` | mtDNA haplogroup + MT-RNR1 (aminoglycoside ototoxicity) |
+
+The bottom five are empty until the second-pass callers run on the CRAM (see
+[`../docs/SECOND_PASS.md`](../docs/SECOND_PASS.md)); `check_drug` automatically
+folds in CYP2D6 (Cyrius), HLA, and MT-RNR1 results once present. `--rebuild`
+auto-restarts the always-on service so new calls go live immediately.
 
 **Resources:** `genome://summary`, `genome://pharmacogenomics`, `genome://traits`
 
