@@ -1,20 +1,30 @@
 # Pipeline & methods
 
-How the scripts turn a sequencing.com 30× WGS download into analysis outputs,
-and the caveats that come with each step.
+How the scripts turn whole-genome sequencing into analysis outputs, and the
+caveats that come with each step. The reference dataset this was developed
+against is a 30× WGS download from sequencing.com, but the scripts read whatever
+you point them at — see Inputs.
 
 ## Inputs
 
-sequencing.com performs secondary analysis and ships:
+**Required:** one small-variant **VCF/gVCF** with genotypes (`GT`), ideally
+dbSNP-annotated — rsIDs drive the trait / PGx / ClinVar matching, so a VCF with
+no rsIDs yields near-empty trait/PGx reports. The scripts auto-detect common
+names — sequencing.com (`*.snp-indel.genome.vcf.gz`), DRAGEN
+(`*.hard-filtered.vcf.gz`), GATK/DeepVariant (`*.g.vcf.gz`, `*deepvariant*`), or
+a plain `genome.vcf.gz` — and fall back to any other `*.vcf.gz`; override with
+`VCF_SNP=`. A gVCF (hom-ref blocks via `END=…`/`MIN_DP`) and a plain VCF both work.
 
-- **Raw reads** — 150 bp paired-end FASTQ, MGI/DNBSEQ platform.
-- **Small variants** — a **gVCF** (`*.snp-indel.genome.vcf.gz`): every position
-  is represented, either as a variant row or a hom-ref block (`END=…`, `MIN_DP`).
-  dbSNP rsIDs are pre-annotated. FORMAT carries `GT:DP:GQ:AD`.
-- **CNVs** — called by **Canvas 1.40**; `<CN0>`, `<DUP>`, etc.
-- **SVs** — called by **Manta 1.6**; `DEL`, `DUP:TANDEM`, `INV`, `BND`.
+**Optional, auto-detected if present:**
+- **Raw reads** — paired FASTQ (`*_R1*`/`*_R2*`, `.fq.gz` or `.fastq.gz`) — for
+  re-alignment and the second-pass callers.
+- **CNVs** — a `*.cnv.vcf.gz` (e.g. Canvas: `<CN0>`, `<DUP>`).
+- **SVs** — a `*.sv.vcf.gz` (e.g. Manta: `DEL`, `DUP:TANDEM`, `INV`, `BND`).
 
-Reference: **GRCh38.p13**, bare contig names (`1`, not `chr1`).
+**Reference build:** GRCh38 is assumed (ClinVar annotation and the second-pass
+callers are GRCh38-specific); trait/PGx lookups are by rsID and build-agnostic.
+The toolkit reads and records your build and contig style (`chr1` vs bare `1`)
+during inspection. The reference dataset was GRCh38.p13, bare contig names.
 
 ## Steps
 
