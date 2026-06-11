@@ -15,7 +15,9 @@
 #
 #   scripts/10_align_from_fastq.sh   ->   scripts/17_mtdna.sh   ->   --rebuild
 #
-# Env: HAPLOGREP (haplogrep3 binary; optional), HAPLOCHECK (optional)
+# Env: HAPLOGREP (haplogrep3 binary), HAPLOGREP_JAR (Haplogrep 2 jar; default
+#      tools/haplogrep/haplogrep.jar), HAPLOCHECK (optional). Haplogroup needs
+#      one of Haplogrep 3 or the Haplogrep 2 jar (+ java); MT-RNR1 PGx never does.
 # ============================================================================
 source "$(dirname "$0")/lib/common.sh"
 require_tool samtools; require_tool bcftools
@@ -44,15 +46,25 @@ CHRM_VCF="$WORK/${SAMPLE}.chrM.vcf.gz"
 bcftools mpileup -f "$REF_FA" -r "$MT" -a FORMAT/AD,FORMAT/DP -d 50000 -q 20 -Q 20 "$CRAM" 2>/dev/null \
   | bcftools call -m --ploidy 1 -Oz -o "$CHRM_VCF" 2>/dev/null && bcftools index -t "$CHRM_VCF" 2>/dev/null || true
 
-# --- 3. haplogroup (optional) ----------------------------------------------
+# --- 3. haplogroup (optional): Haplogrep 3 binary OR Haplogrep 2 jar --------
+# macOS has no Haplogrep 3 native build, so the portable path is the Haplogrep 2
+# jar (runs on Java 8+). Both emit a TSV with Haplogroup + Quality columns.
 HAPLO_OUT="$WORK/${SAMPLE}.haplogroup.txt"
-HG="${HAPLOGREP:-haplogrep3}"
-if have "$HG" && [[ -f "$CHRM_VCF" ]]; then
-  log "Classifying haplogroup with Haplogrep 3..."
-  "$HG" classify --tree phylotree-rcrs@17.0 --input "$CHRM_VCF" --output "$HAPLO_OUT" --extend-report \
-    2>/dev/null || warn "haplogrep3 failed; haplogroup will be omitted."
-else
-  warn "haplogrep3 not found - skipping haplogroup (install: get.haplogrep.org). MT-RNR1 PGx still computed."
+HG3="${HAPLOGREP:-haplogrep3}"
+HAPLOGREP_JAR="${HAPLOGREP_JAR:-$REPO_ROOT/tools/haplogrep/haplogrep.jar}"
+if [[ -f "$CHRM_VCF" ]]; then
+  if have "$HG3"; then
+    log "Classifying haplogroup with Haplogrep 3..."
+    "$HG3" classify --tree phylotree-rcrs@17.0 --input "$CHRM_VCF" --output "$HAPLO_OUT" --extend-report \
+      2>/dev/null || warn "haplogrep3 failed; haplogroup omitted."
+  elif [[ -f "$HAPLOGREP_JAR" ]] && have java; then
+    log "Classifying haplogroup with Haplogrep 2 (jar)..."
+    java -jar "$HAPLOGREP_JAR" classify --in "$CHRM_VCF" --format vcf --out "$HAPLO_OUT" \
+      2>/dev/null || warn "haplogrep jar failed; haplogroup omitted."
+  else
+    warn "No Haplogrep found - skipping haplogroup. Install Haplogrep 3 (get.haplogrep.org)"
+    warn "  or drop haplogrep.jar at $HAPLOGREP_JAR. MT-RNR1 PGx still computed."
+  fi
 fi
 
 # --- 4. contamination/heteroplasmy (optional) ------------------------------

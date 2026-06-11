@@ -77,8 +77,13 @@ install_callers() {
     * Cyrius (CYP2D6) and SMNCopyNumberCaller (SMA) are git-cloned automatically by
       scripts/11_cyp2d6.sh and scripts/15_smn.sh into tools/ on first run.
     * HLA (T1K) builds its IPD-IMGT/HLA index once on first run of 13_hla.sh.
-    * Optional for 17_mtdna.sh: Haplogrep 3 (haplogroup) + Haplocheck (contamination)
-      - Java tools, download from get.haplogrep.org / github.com/genepi/haplocheck.
+    * Optional for 17_mtdna.sh haplogroup (needs Java): Haplogrep 3 on PATH, OR the
+      portable Haplogrep 2 jar (macOS has no v3 build) at tools/haplogrep/haplogrep.jar:
+        mkdir -p tools/haplogrep && curl -fsSL -o tools/haplogrep/haplogrep.zip \
+          https://github.com/seppinho/haplogrep-cmd/releases/download/v2.4.0/haplogrep.zip \
+          && (cd tools/haplogrep && unzip -o haplogrep.zip)
+      (MT-RNR1 pharmacogenomics is computed regardless.) Contamination: Haplocheck
+      (github.com/genepi/haplocheck), also optional.
 EOF
 }
 
