@@ -1,12 +1,12 @@
 # Deploying the genome MCP on your always-on server (Tailscale)
 
 Run the genome MCP as an always-on HTTP service on your personal server, reachable
-**only inside your tailnet**, so Atlas (on another Mac) and Claude Desktop can both
-use it — exactly like your gbrain MCP.
+**only inside your tailnet** (your private network), so the AI assistants on your
+other devices — Claude Desktop, Claude Code, and similar — can all use it.
 
 ```
- your laptop ─┐
- Atlas's Mac ─┤── Tailscale (WireGuard) ──► always-on Mac : http://<ts-ip>:8787/mcp
+ your laptop ───┐
+ your phone  ───┤── Tailscale (WireGuard) ──► always-on server : http://<ts-ip>:8787/mcp
  Claude Desktop ┘                              genome-toolkit MCP (launchd, token-authed)
 ```
 
@@ -31,30 +31,30 @@ scripts/00_install_tools.sh   # bcftools/samtools/htslib (Homebrew)
 The repo is code only — your genome is never in git, so transfer it directly over
 the encrypted tailnet. Two options:
 
-**Option A — self-contained server (recommended).** Send the raw download and
+**Option A — self-contained server (recommended).** Send your raw download and
 re-derive everything on the server (fully reproducible; needs ~120 GB working space):
 
 ```bash
-# from THIS machine — push the raw sequencing.com files over Tailscale (encrypted)
-rsync -avP ~/Documents/personal_dev/my_genome/*.fq.gz \
-            ~/Documents/personal_dev/my_genome/*.vcf.gz \
-   <you>@<server>:~/genome-toolkit/
+# from THIS machine — point at your local data, then push it over Tailscale (encrypted)
+LOCAL=/path/to/your/genome-data        # the folder holding your *.fq.gz / *.vcf.gz
+rsync -avP "$LOCAL"/*.fq.gz "$LOCAL"/*.vcf.gz <you>@<server>:~/genome-toolkit/
 # then ON THE SERVER, build everything:
-scripts/run_all.sh                 # variants, QC, traits, PGx
-scripts/20_clinvar_annotate.sh     # ClinVar tiers
+scripts/run_all.sh                 # variants, QC, traits, drug-response
+scripts/20_clinvar_annotate.sh     # ClinVar health-variant screen
 ```
 
-**Option B — MCP-only (light, ~200 MB, no 60 GB of reads).** Copy just the
-processed artifacts the server needs:
+**Option B — MCP-only (light, ~200 MB, no raw reads).** Copy just the processed
+files the server needs:
 
 ```bash
+LOCAL=/path/to/your/genome-toolkit     # your local checkout (results live in analysis/)
 rsync -avP \
-  ~/Documents/personal_dev/my_genome/analysis/variants.vcf.gz \
-  ~/Documents/personal_dev/my_genome/analysis/variants.vcf.gz.tbi \
-  ~/Documents/personal_dev/my_genome/analysis/genome_insights.json \
-  ~/Documents/personal_dev/my_genome/analysis/genome_embeddings.npz \
-  ~/Documents/personal_dev/my_genome/analysis/genome_embeddings.jsonl \
-  ~/Documents/personal_dev/my_genome/analysis/20_clinvar_all_categorized.tsv \
+  "$LOCAL"/analysis/variants.vcf.gz \
+  "$LOCAL"/analysis/variants.vcf.gz.tbi \
+  "$LOCAL"/analysis/genome_insights.json \
+  "$LOCAL"/analysis/genome_embeddings.npz \
+  "$LOCAL"/analysis/genome_embeddings.jsonl \
+  "$LOCAL"/analysis/20_clinvar_all_categorized.tsv \
   <you>@<server>:~/genome-toolkit/analysis/
 ```
 
@@ -91,7 +91,7 @@ claude mcp add --transport http genome http://<ts-ip>:8787/mcp \
   --header "Authorization: Bearer <token>"
 ```
 
-**Atlas / Claude Desktop** — add a remote MCP / custom connector (same as gbrain):
+**Claude Desktop / other MCP client** — add a remote MCP / custom connector:
 - URL: `http://<ts-ip>:8787/mcp`
 - Header: `Authorization: Bearer <token>`
 
