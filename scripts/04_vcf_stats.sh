@@ -86,6 +86,12 @@ elif [[ "$x_hap" -gt 1000 && "$y_calls" -gt 100 ]]; then sex_guess="XY (male)"; 
   echo
   echo "> A Ts/Tv far below 2.0 or a wild het:hom ratio is the classic sign of"
   echo "> a quality problem. These are sanity checks, not diagnoses."
+  echo ">"
+  echo "> **Note:** the 'healthy range' column assumes ~30× whole-genome sequencing"
+  echo "> of one person. Whole-**exome** data (only the protein-coding ~1–2% of the"
+  echo "> genome) shows far fewer variants, and low-pass/imputed data shifts these"
+  echo "> numbers too — outside-the-range values there reflect the data type, not a"
+  echo "> problem."
   echo
   echo "## Inferred genetic sex"
   echo
