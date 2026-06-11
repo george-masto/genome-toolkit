@@ -1,0 +1,30 @@
+# Repeat-expansion disease loci + classification thresholds.
+# PUBLIC REFERENCE DATA — no individual's genotype here.
+#
+# Used by 14_repeats.sh to classify ExpansionHunter genotypes (repeat counts).
+# locus_id matches the ExpansionHunter GRCh38 variant-catalog LocusId. The
+# larger of the two alleles is compared to pathogenic_min (>=) and normal_max
+# (<=); anything between is "intermediate/premutation — review".
+#
+# Thresholds are standard textbook/GeneReviews values for research triage only.
+# Short-read WGS reliably sizes small/normal alleles and FLAGS large expansions
+# but cannot precisely size very large ones (e.g. full FMR1, C9orf72) — those
+# are reported as "expanded (size approximate)". Confirm any flag clinically
+# (repeat-primed PCR / Southern blot). Verify thresholds against current
+# GeneReviews before acting.
+#
+# columns: locus_id	gene	unit	condition	normal_max	pathogenic_min	inheritance
+HTT	HTT	CAG	Huntington disease	26	36	AD
+C9ORF72	C9orf72	GGGGCC	ALS / frontotemporal dementia	24	30	AD
+FMR1	FMR1	CGG	Fragile X syndrome (full); FXTAS/FXPOI (premutation 55-200)	44	200	XL
+DMPK	DMPK	CTG	Myotonic dystrophy type 1	34	50	AD
+CNBP	CNBP	CCTG	Myotonic dystrophy type 2	26	75	AD
+FXN	FXN	GAA	Friedreich ataxia	33	66	AR
+ATXN1	ATXN1	CAG	Spinocerebellar ataxia 1	35	39	AD
+ATXN2	ATXN2	CAG	Spinocerebellar ataxia 2 (also ALS risk)	31	32	AD
+ATXN3	ATXN3	CAG	Spinocerebellar ataxia 3 (Machado-Joseph)	44	52	AD
+ATXN7	ATXN7	CAG	Spinocerebellar ataxia 7	18	37	AD
+CACNA1A	CACNA1A	CAG	Spinocerebellar ataxia 6	18	20	AD
+ATN1	ATN1	CAG	Dentatorubral-pallidoluysian atrophy	35	48	AD
+TBP	TBP	CAG	Spinocerebellar ataxia 17	40	49	AD
+AR	AR	CAG	Spinal & bulbar muscular atrophy (Kennedy)	34	38	XL

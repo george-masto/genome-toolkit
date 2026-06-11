@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # ============================================================================
-# 50_serve_mcp.sh — set up and serve your genome insights over MCP.
+# 50_serve_mcp.sh - set up and serve your genome insights over MCP.
 #
 # One command: creates a venv, installs the MCP SDK, builds the structured
 # insights file, and prints the exact config to paste into your agent
-# (Claude Desktop / Claude Code / Cursor). Everything stays local — the server
+# (Claude Desktop / Claude Code / Cursor). Everything stays local - the server
 # speaks stdio and never opens a network port.
 #
 #   scripts/50_serve_mcp.sh               # setup + build + print stdio config
@@ -26,8 +26,8 @@ INSIGHTS="$OUT_DIR/genome_insights.json"
 
 ensure_venv() {
   if [[ ! -x "$PYBIN" ]]; then
-    log "Creating venv at $VENV…"
-    python3 -m venv "$VENV"
+    log "Creating venv at ${VENV}..."
+    "${PYTHON:-python3}" -m venv "$VENV"
     "$PYBIN" -m pip install -q --upgrade pip
     "$PYBIN" -m pip install -q -r "$MCP_DIR/requirements.txt"
     ok "Installed MCP SDK"
@@ -35,18 +35,18 @@ ensure_venv() {
 }
 
 build_insights() {
-  [[ -f "$OUT_DIR/variants.vcf.gz" ]] || die "No variants.vcf.gz — run scripts/run_all.sh first."
-  log "Building structured insights…"
+  [[ -f "$OUT_DIR/variants.vcf.gz" ]] || die "No variants.vcf.gz - run scripts/run_all.sh first."
+  log "Building structured insights..."
   OUT_DIR="$OUT_DIR" "$PYBIN" "$MCP_DIR/build_insights.py"
 }
 
 build_embeddings() {
   [[ -f "$INSIGHTS" ]] || build_insights
-  log "Installing local embedding deps (one-time)…"
+  log "Installing local embedding deps (one-time)..."
   "$PYBIN" -m pip install -q -r "$MCP_DIR/requirements-embeddings.txt"
-  log "Building LOCAL semantic-search index (model downloads once, then offline)…"
+  log "Building LOCAL semantic-search index (model downloads once, then offline)..."
   OUT_DIR="$OUT_DIR" "$PYBIN" "$MCP_DIR/build_embeddings.py"
-  ok "Semantic search ready — the server's semantic_search tool is now live."
+  ok "Semantic search ready - the server's semantic_search tool is now live."
 }
 
 TOKEN_FILE="$MCP_DIR/.mcp_token"
@@ -85,7 +85,7 @@ print_http_config() {
       URL:     http://$HOST:$PORT/mcp
       Header:  Authorization = Bearer $TOKEN
 
-  (Token stored at $TOKEN_FILE — gitignored. Reachable only inside your tailnet.)
+  (Token stored at $TOKEN_FILE - gitignored. Reachable only inside your tailnet.)
 EOF
   hr
 }
@@ -102,7 +102,7 @@ serve_http() {
 install_service() {
   ensure_venv
   [[ -f "$INSIGHTS" ]] || build_insights
-  have tailscale || warn "tailscale CLI not found — the service will bind to 127.0.0.1 until it is."
+  have tailscale || warn "tailscale CLI not found - the service will bind to 127.0.0.1 until it is."
   mkdir -p "$HOME/Library/LaunchAgents" "$REPO_ROOT/logs"
   local token; token="$(ensure_token)"
   cat > "$PLIST" <<EOF
@@ -143,6 +143,20 @@ uninstall_service() {
   ok "Removed launchd service. (Token + data untouched.)"
 }
 
+# The server reads genome_insights.json once at startup, so a rebuild only
+# reaches the LIVE MCP after a restart. If the always-on service is loaded,
+# bounce it so a fresh build (e.g. a new CYP2D6 call) is served immediately.
+restart_service_if_running() {
+  if launchctl list 2>/dev/null | grep -q 'com\.genome-toolkit\.mcp'; then
+    log "Restarting the always-on MCP service so it serves the rebuilt insights..."
+    launchctl kickstart -k "gui/$(id -u)/com.genome-toolkit.mcp" 2>/dev/null \
+      || { launchctl unload "$PLIST" 2>/dev/null; launchctl load "$PLIST" 2>/dev/null; }
+    ok "MCP service restarted - live data is now the rebuilt insights."
+  else
+    warn "Insights rebuilt. No always-on service loaded; restart your MCP client/server to serve them."
+  fi
+}
+
 print_config() {
   hr
   log "MCP server is ready. Connect it to your agent:"
@@ -174,14 +188,14 @@ EOF
 }
 
 case "${1:-}" in
-  --rebuild)    ensure_venv; build_insights ;;
+  --rebuild)    ensure_venv; build_insights; restart_service_if_running ;;
   --embeddings) ensure_venv; build_embeddings ;;
   --http)       serve_http ;;
   --install-service)   install_service ;;
   --uninstall-service) uninstall_service ;;
   --run)     ensure_venv; [[ -f "$INSIGHTS" ]] || build_insights; exec "$PYBIN" "$MCP_DIR/server.py" ;;
   --inspect) ensure_venv; [[ -f "$INSIGHTS" ]] || build_insights
-             log "Launching MCP Inspector (needs npx)…"
+             log "Launching MCP Inspector (needs npx)..."
              exec npx -y @modelcontextprotocol/inspector "$PYBIN" "$MCP_DIR/server.py" ;;
   *)         ensure_venv; build_insights; print_config ;;
 esac
