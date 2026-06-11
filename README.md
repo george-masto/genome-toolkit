@@ -74,7 +74,7 @@ Example — the pharmacogenomic profile card *(illustrative format, not real dat
 
 ```
 scripts/
-├── 00_install_tools.sh      install bcftools/samtools/htslib (+ --align toolchain)
+├── 00_install_tools.sh      install bcftools/samtools/htslib (+ --align / --callers)
 ├── 01_inspect.sh            characterize every input file
 ├── 02_index_vcfs.sh         bgzip + tabix index for fast queries
 ├── 03_extract_variants.sh   gVCF → compact variants.vcf.gz (+ PASS subset)
@@ -83,6 +83,13 @@ scripts/
 ├── 06_trait_report.sh       genotype at a curated set of well-known variants
 ├── 07_pgx_report.sh         CPIC pharmacogenomic profile card
 ├── 10_align_from_fastq.sh   FROM SCRATCH: FASTQ → CRAM → coverage (hours)
+│   ── second pass: specialty callers on the CRAM (see docs/SECOND_PASS.md) ──
+├── 11_cyp2d6.sh             CYP2D6 diplotype + copy number  (Cyrius)
+├── 13_hla.sh                HLA drug-hypersensitivity alleles  (T1K)
+├── 14_repeats.sh            repeat-expansion disorders  (ExpansionHunter)
+├── 15_smn.sh                SMN1/SMN2 — SMA carrier status  (SMNCopyNumberCaller)
+├── 16_gba.sh                GBA — Gaucher / Parkinson's  (Gauchian)
+├── 17_mtdna.sh              mtDNA haplogroup + MT-RNR1  (bcftools + Haplogrep)
 ├── 20_clinvar_annotate.sh   full ClinVar screen, every tier, star-ranked
 ├── 50_serve_mcp.sh          serve your insights to any AI agent over MCP
 ├── run_all.sh               the quick-start chain (01→07)
@@ -108,6 +115,30 @@ callers — it's one command (downloads GRCh38, several hours, ~80 GB scratch):
 scripts/00_install_tools.sh --align     # bwa-mem2, fastp, mosdepth, …
 scripts/10_align_from_fastq.sh
 ```
+
+### Second pass: the genes a flat VCF can't type
+
+A few of the most important loci are structurally hard — a near-identical
+pseudogene, copy-number variation, an HLA gene with thousands of alleles, a
+tandem repeat — so a generic SNP caller returns a dead-end or a wrong answer.
+The classic example is **CYP2D6** (codeine, tamoxifen, atomoxetine, many
+antidepressants), which the gVCF reports as *"incompletely typed."* Once you
+have the CRAM, purpose-built callers resolve them:
+
+```bash
+scripts/00_install_tools.sh --callers   # ExpansionHunter, T1K, Gauchian, deps
+scripts/11_cyp2d6.sh    # CYP2D6 diplotype + copy number  (Cyrius)
+scripts/13_hla.sh       # HLA-B*57:01 (abacavir), B*15:02/A*31:01 (carbamazepine)…
+scripts/14_repeats.sh   # Huntington, ALS/FTD (C9orf72), Fragile-X, SCAs, DM1…
+scripts/15_smn.sh       # SMN1/SMN2 — spinal muscular atrophy carrier status
+scripts/16_gba.sh       # GBA — Gaucher disease / Parkinson's risk
+scripts/17_mtdna.sh     # mtDNA haplogroup + MT-RNR1 (aminoglycoside ototoxicity)
+scripts/50_serve_mcp.sh --rebuild        # MCP picks up the new calls (auto-restarts the service)
+```
+
+Each writes a normalized `analysis/calls/*.json`; `build_insights.py` ingests
+them and the MCP's `get_second_pass_status` shows what's been run vs is pending.
+Full rationale and per-gene detail in [`docs/SECOND_PASS.md`](docs/SECOND_PASS.md).
 
 ---
 
@@ -137,14 +168,15 @@ and a live `lookup_variant(rsID/region)`. Full setup + per-client config in
 ## How the data flows
 
 ```
- FASTQ (raw reads) ──10──► CRAM (aligned) ──┐
-                                            ├─► specialized callers (DeepVariant, Cyrius…)
- vendor gVCF ──03──► variants.vcf.gz ───────┤
-                                            ├─04─► QC summary
-                                            ├─06─► trait report
-                                            ├─07─► pharmacogenomic card
-                                            ├─20─► ClinVar screen
-                                            └─50─► genome_insights.json ─► MCP server ─► your agent
+ FASTQ (raw reads) ──10──► CRAM (aligned) ──► 11 CYP2D6 · 13 HLA · 14 repeats ──┐
+                                              15 SMN · 16 GBA · 17 mtDNA         │ analysis/calls/*.json
+ vendor gVCF ──03──► variants.vcf.gz ───────┐                                   │
+                                            ├─04─► QC summary                   │
+                                            ├─06─► trait report                 │
+                                            ├─07─► pharmacogenomic card         │
+                                            ├─20─► ClinVar screen               │
+                                            └─50─► genome_insights.json ◄────────┘
+                                                        └─► MCP server ─► your agent
 ```
 
 Most analyses (the whole right side) run in minutes from the gVCF. Only the
@@ -159,6 +191,7 @@ left side (FASTQ → CRAM) is the long, optional re-alignment. See
 - Core analysis needs only `bcftools` / `samtools` / `htslib` — installed by
   `scripts/00_install_tools.sh`.
 - Re-alignment additionally needs the `--align` toolchain and ~80 GB free disk.
+- The second-pass callers need the `--callers` tier (conda/bioconda) and the CRAM.
 - Public reference data (GRCh38, ClinVar) is **downloaded on demand**, never committed.
 
 ---
@@ -172,8 +205,10 @@ left side (FASTQ → CRAM) is the long, optional re-alignment. See
    like genomic data — by extension, by sample id, or by sniffing VCF/BAM/CRAM
    content. Enable it with `scripts/install_git_hooks.sh`.
 3. The only data committed on purpose is **public reference knowledge** —
-   `assets/traits/*.tsv` and `assets/pharmacogenes/*.tsv` (rsID → trait/drug
-   maps), which contain **no individual's genotype**.
+   `assets/traits/*.tsv`, `assets/pharmacogenes/*.tsv` (rsID → trait/drug maps,
+   CYP2D6 + HLA allele functions), and `assets/repeats/*.tsv` (repeat-disorder
+   thresholds), which contain **no individual's genotype**. Cloned upstream
+   callers land in `tools/` (gitignored).
 
 Sanity-check at any time:
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# common.sh — shared config, paths, and helpers for all pipeline scripts.
+# common.sh - shared config, paths, and helpers for all pipeline scripts.
 #
 # Source this from every script:  source "$(dirname "$0")/lib/common.sh"
 #
@@ -42,6 +42,21 @@ hr()    { printf "${_c_dim}%s${_c_off}\n" "-------------------------------------
 have()         { command -v "$1" >/dev/null 2>&1; }
 require_tool() { have "$1" || die "Required tool '$1' not found. Run scripts/00_install_tools.sh"; }
 
+# Second-pass callers all need the CRAM (+ its reference). Fail with the exact
+# next step rather than a cryptic tool error when the alignment hasn't been run.
+require_cram() {
+  [[ -n "${CRAM:-}" && -f "$CRAM" ]] || die "No CRAM/BAM found in $ALIGN_DIR.
+     The specialty callers run on the aligned reads, not the gVCF. First:
+       scripts/00_install_tools.sh --align && scripts/10_align_from_fastq.sh"
+  [[ -f "$REF_FA" ]] || warn "Reference $REF_FA not found - CRAM decoding may fail.
+     It is created by scripts/10_align_from_fastq.sh (set REF_FA to override)."
+  mkdir -p "$CALLS_DIR"
+}
+
+# Stamp a normalized call file's generated_utc without needing python/date math
+# inside each wrapper. Usage: now_utc -> ISO-8601 string.
+now_utc() { date -u +%Y-%m-%dT%H:%M:%SZ; }
+
 # --- Auto-detect the input files (first match of each glob) -----------------
 # Use nullglob so a missing file yields an empty string instead of the pattern.
 shopt -s nullglob
@@ -52,6 +67,16 @@ FASTQ_R2="${FASTQ_R2:-$(_first "$DATA_DIR"/*.2.fq.gz "$DATA_DIR"/*_2.fq.gz "$DAT
 VCF_SNP="${VCF_SNP:-$(_first "$DATA_DIR"/*snp-indel*.vcf.gz "$DATA_DIR"/*.hard-filtered.vcf.gz)}"
 VCF_CNV="${VCF_CNV:-$(_first "$DATA_DIR"/*.cnv.vcf.gz "$DATA_DIR"/*cnv*.vcf.gz)}"
 VCF_SV="${VCF_SV:-$(_first "$DATA_DIR"/*.sv.vcf.gz "$DATA_DIR"/*sv*.vcf.gz)}"
+
+# --- Second-pass (CRAM-based) caller infrastructure -------------------------
+# The alignment from 10_align_from_fastq.sh lands here, and is the shared input
+# for every specialty caller (Cyrius, ExpansionHunter, SMN, GBA, HLA, mtDNA).
+ALIGN_DIR="${ALIGN_DIR:-$OUT_DIR/align}"
+CRAM="${CRAM:-$(_first "$ALIGN_DIR"/*.markdup.cram "$ALIGN_DIR"/*.cram "$DATA_DIR"/*.cram "$DATA_DIR"/*.bam)}"
+# The GRCh38 no-alt reference that 10_align downloaded; CRAM decoding needs it.
+REF_FA="${REF_FA:-$REF_DIR/GRCh38_no_alt.fa}"
+# Normalized caller outputs that build_insights.py ingests (analysis/calls/*.json).
+CALLS_DIR="${CALLS_DIR:-$OUT_DIR/calls}"
 shopt -u nullglob
 
 # --- Derived: sample name + reference build (read from the VCF itself) ------
@@ -59,7 +84,9 @@ shopt -u nullglob
 sample_name() {
   if [[ -n "${_SAMPLE_NAME:-}" ]]; then printf '%s' "$_SAMPLE_NAME"; return; fi
   if [[ -n "$VCF_SNP" && -f "$VCF_SNP" ]] && have bcftools; then
-    _SAMPLE_NAME="$(bcftools query -l "$VCF_SNP" 2>/dev/null | head -1)"
+    # `|| true`: head closing the pipe early can SIGPIPE bcftools (exit 141) on a
+    # multi-sample VCF, which would trip `set -o pipefail`. Match ref_build()'s style.
+    _SAMPLE_NAME="$(bcftools query -l "$VCF_SNP" 2>/dev/null | head -1 || true)"
   fi
   printf '%s' "${_SAMPLE_NAME:-unknown}"
 }

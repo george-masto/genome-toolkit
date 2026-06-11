@@ -49,6 +49,16 @@ def _err():
                      f"Run: python3 mcp/build_insights.py (after scripts/run_all.sh)."}
 
 
+def _variants_vcf():
+    """Resolve the variants file portably: prefer the copy sitting next to the
+    insights JSON (so moving the whole folder to another machine just works),
+    fall back to the absolute path recorded at build time."""
+    local = INSIGHTS_PATH.parent / "variants.vcf.gz"
+    if local.exists():
+        return str(local)
+    return (DATA or {}).get("paths", {}).get("variants_vcf", str(local))
+
+
 # ---------------------------------------------------------------- tools -------
 @mcp.tool()
 def get_summary() -> dict:
@@ -86,22 +96,44 @@ def get_pharmacogenomics(actionable_only: bool = False) -> list:
     return rows
 
 
+def _drug_match(q: str, drugs) -> bool:
+    return any(q in d.lower() or d.lower() in q for d in (drugs or []))
+
+
 @mcp.tool()
 def check_drug(drug: str) -> dict:
-    """Given a drug name, return the pharmacogenes that affect it and this
-    person's predicted phenotype + guidance. Example: check_drug('clopidogrel')."""
+    """Given a drug name, return everything in this person's genome that affects
+    it: pharmacogene metabolizer phenotype (CPIC), HLA hypersensitivity-risk
+    alleles (e.g. abacavir/HLA-B*57:01, carbamazepine/HLA-B*15:02), and any
+    copy-number-aware caller results (CYP2D6 via Cyrius, extra CYPs via Aldy).
+    Example: check_drug('clopidogrel'), check_drug('codeine'), check_drug('abacavir')."""
     if not DATA:
         return _err()
     q = drug.strip().lower()
     hits = []
-    for g in DATA["pharmacogenomics"]:
-        if any(q in d.lower() or d.lower() in q for d in g["drugs"]):
-            hits.append({"gene": g["gene"], "genotype": g["genotype"],
-                         "phenotype": g["phenotype"], "actionable": g["actionable"],
-                         "implication": g["implication"]})
+    # 1. core pharmacogenes (+ any CYP2D6 entry upgraded by Cyrius) and Aldy extras
+    for g in DATA.get("pharmacogenomics", []) + DATA.get("advanced_pgx", []):
+        if _drug_match(q, g.get("drugs")):
+            hits.append({"gene": g.get("gene"), "genotype": g.get("genotype"),
+                         "phenotype": g.get("phenotype"), "actionable": g.get("actionable"),
+                         "method": g.get("method", "SNP panel"),
+                         "implication": g.get("implication")})
+    # 2. HLA hypersensitivity-risk alleles (only meaningful from a CRAM-based caller)
+    for h in DATA.get("hla", []):
+        if _drug_match(q, h.get("drugs")):
+            hits.append({"hla_allele": h.get("allele"), "carried": h.get("carried", h.get("status")),
+                         "actionable": h.get("actionable"), "method": "HLA caller",
+                         "implication": h.get("implication")})
+    # 3. mitochondrial MT-RNR1 (aminoglycoside ototoxicity)
+    for m in DATA.get("mito", []):
+        for s in m.get("mt_rnr1", []):
+            if _drug_match(q, s.get("drugs")):
+                hits.append({"variant": s.get("variant"), "present": s.get("present"),
+                             "actionable": s.get("actionable"), "method": "mtDNA (MT-RNR1)",
+                             "implication": s.get("implication")})
     return {"drug": drug, "matches": hits,
             "note": "Predicted from WGS — confirm against CPIC (cpicpgx.org) with a pharmacist."
-                    if hits else "No catalogued pharmacogene for this drug in the local panel."}
+                    if hits else "No catalogued pharmacogene or HLA risk allele for this drug in the local panel."}
 
 
 @mcp.tool()
@@ -141,6 +173,73 @@ def search_clinvar(gene: str = "", tier: str = "", min_stars: int = 0) -> dict:
 
 
 @mcp.tool()
+def get_second_pass_status() -> dict:
+    """What of the CRAM-based specialty-caller panel has actually been run vs is
+    still pending. These callers genotype things a flat short-read VCF cannot —
+    CYP2D6 copy number (Cyrius), HLA alleles, repeat expansions, SMN1/2 (SMA),
+    GBA (Gaucher/Parkinson's), mtDNA. Use this to tell whether e.g. CYP2D6 is a
+    real call yet or still 'incompletely typed'."""
+    if not DATA:
+        return _err()
+    return DATA.get("second_pass", {"available": {}, "pending": {},
+                                    "note": "schema predates second-pass; rebuild insights."})
+
+
+@mcp.tool()
+def get_carrier_status() -> dict:
+    """Recessive carrier-screening results from copy-number/paralog-aware callers
+    that a SNP VCF misses — e.g. SMN1/SMN2 (spinal muscular atrophy) and GBA
+    (Gaucher). Empty until the relevant scripts/1x_*.sh have run on the CRAM."""
+    if not DATA:
+        return _err()
+    rows = DATA.get("carrier_status", [])
+    return {"carrier_status": rows,
+            "note": "Carrier screening from WGS — confirm clinically before reproductive decisions."
+                    if rows else "Not yet computed. Run scripts/15_smn.sh / 16_gba.sh on the CRAM, then rebuild insights."}
+
+
+@mcp.tool()
+def get_repeat_expansions() -> dict:
+    """Repeat-expansion disorder genotypes (HTT/Huntington, C9orf72/ALS-FTD,
+    FMR1/Fragile-X, DM1, SCAs, Friedreich's) from ExpansionHunter. These STR loci
+    are invisible to a SNP VCF. Empty until scripts/14_repeats.sh has run."""
+    if not DATA:
+        return _err()
+    rows = DATA.get("repeat_expansions", [])
+    return {"repeat_expansions": rows,
+            "note": "Repeat sizes from short-read WGS; very large expansions are flagged "
+                    "but not precisely sized — confirm flagged loci clinically."
+                    if rows else "Not yet computed. Run scripts/14_repeats.sh on the CRAM, then rebuild insights."}
+
+
+@mcp.tool()
+def get_hla() -> dict:
+    """HLA alleles relevant to drug-hypersensitivity pharmacogenetics
+    (HLA-B*57:01 abacavir; B*15:02 / A*31:01 carbamazepine; B*58:01 allopurinol)
+    plus disease-associated HLA. Invisible to a SNP VCF. Empty until
+    scripts/13_hla.sh has run. For a specific drug, prefer check_drug()."""
+    if not DATA:
+        return _err()
+    rows = DATA.get("hla", [])
+    return {"hla": rows,
+            "note": "HLA typed from WGS reads — confirm before acting on a hypersensitivity flag."
+                    if rows else "Not yet computed. Run scripts/13_hla.sh on the CRAM, then rebuild insights."}
+
+
+@mcp.tool()
+def get_mitochondrial() -> dict:
+    """Mitochondrial findings: haplogroup, MT-RNR1 variants (m.1555A>G / m.1494C>T
+    — CPIC: aminoglycoside-induced hearing loss), and heteroplasmy/contamination.
+    Empty until scripts/17_mtdna.sh has run."""
+    if not DATA:
+        return _err()
+    rows = DATA.get("mito", [])
+    return {"mito": rows,
+            "note": "Mitochondrial calls from WGS chrM reads."
+                    if rows else "Not yet computed. Run scripts/17_mtdna.sh on the CRAM, then rebuild insights."}
+
+
+@mcp.tool()
 def lookup_variant(query: str) -> list:
     """Live genotype lookup by rsID (e.g. 'rs429358'), single position
     ('19:44908684'), or region ('19:44905000-44910000'). Reads your
@@ -148,7 +247,7 @@ def lookup_variant(query: str) -> list:
     ones. An absent rsID usually means homozygous reference."""
     if not DATA:
         return [_err()]
-    vcf = DATA["paths"]["variants_vcf"]
+    vcf = _variants_vcf()
     fmt = "%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\t[%GT]\\t[%DP]\\t[%GQ]\\n"
     if query.strip().lower().startswith("rs"):
         with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
