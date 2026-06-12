@@ -16,7 +16,6 @@ import json
 import os
 import re
 import subprocess
-import tempfile
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
@@ -249,16 +248,16 @@ def lookup_variant(query: str) -> list:
         return [_err()]
     vcf = _variants_vcf()
     fmt = "%CHROM\\t%POS\\t%ID\\t%REF\\t%ALT\\t[%GT]\\t[%DP]\\t[%GQ]\\n"
-    if query.strip().lower().startswith("rs"):
-        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
-            f.write(query.strip())
-            tmp = f.name
-        try:
-            cmd = (f"bcftools view {vcf} 2>/dev/null | "
-                   f"bcftools query -i 'ID==\"{query.strip()}\"' -f '{fmt}' 2>/dev/null")
-            res = subprocess.run(cmd, shell=True, text=True, capture_output=True).stdout
-        finally:
-            os.unlink(tmp)
+    rsid = query.strip()
+    if rsid.lower().startswith("rs"):
+        # An rsID is 'rs' + digits. This strict check is also the injection guard:
+        # `rsid` is interpolated into the shell command below, so anything that is
+        # not rs<digits> must be rejected before it can reach the shell.
+        if not re.fullmatch(r"rs\d+", rsid, re.IGNORECASE):
+            return [{"error": f"Invalid rsID '{query}'. Expected 'rs' followed by digits, e.g. rs429358."}]
+        cmd = (f"bcftools view {vcf} 2>/dev/null | "
+               f"bcftools query -i 'ID==\"{rsid}\"' -f '{fmt}' 2>/dev/null")
+        res = subprocess.run(cmd, shell=True, text=True, capture_output=True).stdout
     else:
         region = query.strip()
         if not re.match(r"^(chr)?[\dXYMT]+:\d+(-\d+)?$", region):
