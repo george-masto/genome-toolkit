@@ -100,6 +100,24 @@ def _drug_match(q: str, drugs) -> bool:
 
 
 @mcp.tool()
+def get_polygenic_scores() -> dict:
+    """Polygenic risk scores (PRS): thousands of common variants aggregated into a
+    calibrated, ancestry-matched risk percentile — the lens single-variant ClinVar
+    findings cannot give. Each entry has the score id/name, trait, percentile (within
+    the matching ancestry group), z-score, interpretation, method, and caveats.
+    Currently: coronary artery disease (PGS000018, the Inouye metaGRS)."""
+    if not DATA:
+        return _err()
+    return {"polygenic_scores": DATA.get("polygenic_scores", []),
+            "disclaimer": DATA.get("disclaimer", ""),
+            "note": "Percentiles are ancestry-matched and population-RELATIVE, not "
+                    "diagnostic; converting to absolute risk needs an age/sex baseline. "
+                    "PRS requires DENSE genotypes — a variant-only VCF scores it "
+                    "incorrectly (omits hom-ref sites where the effect allele is the "
+                    "reference allele)."}
+
+
+@mcp.tool()
 def check_drug(drug: str) -> dict:
     """Given a drug name, return everything in this person's genome that affects
     it: pharmacogene metabolizer phenotype (CPIC), HLA hypersensitivity-risk

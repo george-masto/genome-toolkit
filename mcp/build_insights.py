@@ -410,9 +410,10 @@ def build_advanced(calls):
     design: each caller owns its own payload shape; if a call bundles many items
     under 'loci'/'alleles'/'items' we flatten those, else we keep the object."""
     sections = {"carrier_status": [], "repeat_expansions": [], "hla": [],
-                "mito": [], "advanced_pgx": []}
+                "mito": [], "advanced_pgx": [], "polygenic_scores": []}
     routed = {"carrier": "carrier_status", "repeat_expansion": "repeat_expansions",
-              "hla": "hla", "mito": "mito", "pharmacogene": "advanced_pgx"}
+              "hla": "hla", "mito": "mito", "pharmacogene": "advanced_pgx",
+              "polygenic": "polygenic_scores"}
     for c in calls.values():
         if not isinstance(c, dict):
             continue
@@ -476,6 +477,7 @@ def main():
         "hla": advanced["hla"],
         "mito": advanced["mito"],
         "advanced_pgx": advanced["advanced_pgx"],
+        "polygenic_scores": advanced["polygenic_scores"],
         "second_pass": build_second_pass_summary(calls),
         "paths": {"variants_vcf": str(VARIANTS)},
     }
