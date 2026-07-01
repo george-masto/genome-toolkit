@@ -459,6 +459,8 @@ def main():
 
     calls = load_calls()           # second-pass specialty-caller outputs, if any
     advanced = build_advanced(calls)
+    _anc = calls.get("ancestry")   # scripts/30_ancestry.sh — genetic-ancestry composition
+    ancestry = _anc if isinstance(_anc, dict) and _anc.get("status") == "ok" else None
 
     insights = {
         "schema_version": 2,
@@ -478,6 +480,7 @@ def main():
         "mito": advanced["mito"],
         "advanced_pgx": advanced["advanced_pgx"],
         "polygenic_scores": advanced["polygenic_scores"],
+        "ancestry": ancestry,
         "second_pass": build_second_pass_summary(calls),
         "paths": {"variants_vcf": str(VARIANTS)},
     }
@@ -493,6 +496,8 @@ def main():
           file=sys.stderr)
     print(f"  CYP2D6={d6.get('genotype')} [{d6.get('method')}]  "
           f"second-pass available: {sp_avail}", file=sys.stderr)
+    print(f"  ancestry={(insights.get('ancestry') or {}).get('assigned_superpopulation', 'not computed')}",
+          file=sys.stderr)
 
 
 if __name__ == "__main__":

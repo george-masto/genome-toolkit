@@ -89,6 +89,8 @@ own pipeline. The scripts figure out your file names automatically.
 | **Traits** | the genetics behind everyday things — caffeine, lactose tolerance, APOE (Alzheimer's), MTHFR… |
 | **Drug-response card** | how your body is predicted to handle common medications — pharmacist-ready |
 | **Health-variant screen** | variants you carry that are listed in **ClinVar** (a public database of DNA changes doctors have linked to conditions), ranked by how well-established each is |
+| **Ancestry** | your estimated super-population make-up (European, East Asian, African, South Asian…) by PCA projection onto a global reference panel |
+| **Risk scores** | polygenic (whole-genome) risk percentiles for complex traits, matched to your ancestry |
 | **Look up anything** | your DNA at any gene, position, or known variant, on demand |
 
 Example — the drug-response card *(illustrative format, not real data)*. A
@@ -108,8 +110,10 @@ change the right dose:
 ## Quick start
 
 ```bash
-# 0. tell the scripts where your data is (the folder with your VCF / FASTQ)
-export DATA_DIR=/path/to/your/genome
+# 0. point the toolkit at your data — copy the config template, then edit ONE line
+cp config.example.sh config.sh          # then set DATA_DIR= to your data folder
+#   (config.sh is gitignored; for a one-off run you can instead:
+#    export DATA_DIR=/path/to/your/genome)
 
 # 1. install the basic tools (via Homebrew or conda)
 scripts/00_install_tools.sh
@@ -121,9 +125,10 @@ scripts/install_git_hooks.sh
 scripts/run_all.sh
 ```
 
-Everything generated goes to `analysis/`, which is kept private. If the scripts
-can't find your file, they'll list what they *did* see and tell you exactly what
-to set.
+Everything is driven by that one **`config.sh`** — every script reads it, so you
+never edit code to point at your data. Results go to `analysis/`, which is kept
+private. If a script still can't find your file, it lists what it *did* see and
+tells you exactly what to set.
 
 ### 🤖 Or just hand this whole folder to your AI agent
 
@@ -138,6 +143,16 @@ AI-coding assistant) and paste something like:
 The assistant has everything it needs — the scripts find your files, keep
 results local, and print the exact config to connect. From then on you can just
 ask it about your genome in plain English.
+
+**Bring your own health docs into the conversation.** Once it's connected, you
+can drop a prescription, a doctor's note, or a lab PDF straight into the chat and
+the assistant reasons across *both* — your document and your DNA. It supplies the
+medical world-knowledge (what the drug is, what the note means); the toolkit
+supplies *your* genotype. Nothing about your genome leaves your machine to do it.
+
+> *"My doctor suggested this SSRI — any reason it might not suit me?"* → the agent
+> checks your CYP2C19/CYP2D6 status and flags a likely dose/efficacy issue to
+> raise with your doctor. *(Educational, not medical advice.)*
 
 ---
 
@@ -165,6 +180,8 @@ scripts/
 ├── 16_gba.sh                GBA — Gaucher / Parkinson's risk  (Gauchian)
 ├── 17_mtdna.sh              maternal-line ancestry + a hearing-loss drug gene  (Haplogrep)
 ├── 20_clinvar_annotate.sh   full ClinVar health-variant screen
+├── 21_prs.sh                polygenic risk scores — whole-genome trait risk percentiles
+├── 30_ancestry.sh           genetic-ancestry composition (PCA vs HGDP+1kGP)
 ├── 50_serve_mcp.sh          serve your results to an AI assistant
 ├── run_all.sh               the main analysis chain (steps 01→07)
 ├── install_git_hooks.sh     turn on the privacy guard

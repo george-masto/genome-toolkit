@@ -10,8 +10,20 @@
 set -euo pipefail
 
 block=0
-# Patterns that must never be committed (extensions + sample id + report dir).
-deny_re='\.(fq|fastq|fq\.gz|fastq\.gz|sam|bam|cram|bai|crai|csi|vcf|vcf\.gz|gvcf|g\.vcf\.gz|bcf|tbi|fa|fasta|fna|fai|dict)$|SAMPLE_ID|Mastorakos|^reports/'
+# Generic deny patterns — safe to publish (data extensions + the reports/ dir).
+deny_re='\.(fq|fastq|fq\.gz|fastq\.gz|sam|bam|cram|bai|crai|csi|vcf|vcf\.gz|gvcf|g\.vcf\.gz|bcf|tbi|fa|fasta|fna|fai|dict)$|^reports/'
+
+# Extra, PERSONAL deny patterns (your name, sample/order id, …) are kept OUT of
+# this committed file so they never ship in a public repo. Put one egrep
+# fragment per line in .githooks/deny.local (gitignored) and they're appended
+# here at runtime — belt-and-suspenders that stays local to your clone.
+_hookdir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$_hookdir/deny.local" ]]; then
+  while IFS= read -r _pat || [[ -n "$_pat" ]]; do
+    [[ -z "$_pat" || "$_pat" == \#* ]] && continue
+    deny_re="$deny_re|$_pat"
+  done < "$_hookdir/deny.local"
+fi
 
 while IFS= read -r f; do
   [[ -z "$f" ]] && continue

@@ -70,6 +70,7 @@ def get_summary() -> dict:
     return {
         "sample": DATA["sample"],
         "reference": DATA["reference"],
+        "ancestry": (DATA.get("ancestry") or {}).get("assigned_label", "not computed"),
         "generated_utc": DATA["generated_utc"],
         "qc": DATA["qc"],
         "counts": {
@@ -105,7 +106,8 @@ def get_polygenic_scores() -> dict:
     calibrated, ancestry-matched risk percentile — the lens single-variant ClinVar
     findings cannot give. Each entry has the score id/name, trait, percentile (within
     the matching ancestry group), z-score, interpretation, method, and caveats.
-    Currently: coronary artery disease (PGS000018, the Inouye metaGRS)."""
+    Ships with one worked example trait — coronary artery disease (PGS000018, the
+    Inouye metaGRS); add more by rerunning scripts/21_prs.sh with other PGS ids."""
     if not DATA:
         return _err()
     return {"polygenic_scores": DATA.get("polygenic_scores", []),
@@ -115,6 +117,24 @@ def get_polygenic_scores() -> dict:
                     "PRS requires DENSE genotypes — a variant-only VCF scores it "
                     "incorrectly (omits hom-ref sites where the effect allele is the "
                     "reference allele)."}
+
+
+@mcp.tool()
+def get_ancestry() -> dict:
+    """Genetic-ancestry composition: estimated super-population make-up (European,
+    East Asian, African, South Asian, Middle Eastern, Admixed American, Oceanian)
+    from PCA projection onto the HGDP+1kGP reference panel + k-NN assignment.
+    Returns the top assignment, per-group proportions, PC coordinates, method, and
+    caveats. Ancestry is a continuum — these are reference-relative estimates, not
+    identity. Useful context for interpreting PRS and population-specific variants."""
+    if not DATA:
+        return _err()
+    anc = DATA.get("ancestry")
+    if not anc:
+        return {"note": "Ancestry not computed yet. Run scripts/30_ancestry.sh "
+                        "(needs the HGDP+1kGP reference panel, same as PRS), then "
+                        "scripts/50_serve_mcp.sh --rebuild."}
+    return anc
 
 
 @mcp.tool()
@@ -335,7 +355,7 @@ def _ensure_embeddings():
 def semantic_search(query: str, top_k: int = 10, source: str = "", min_stars: int = 0) -> dict:
     """Fuzzy / meaning-based search over YOUR genome findings — finds matches by
     concept, not keywords. Use for open-ended questions where the exact words
-    won't appear in the data, e.g. 'connective tissue', 'heart rhythm',
+    won't appear in the data, e.g. 'cholesterol', 'heart rhythm',
     'serotonin', 'inflammation'. Optional filters: source in
     {clinvar, pharmacogenomics, trait}, and min_stars (ClinVar confidence 0-4).
     For an exact rsID/gene/drug, prefer lookup_variant / check_drug / search_clinvar."""

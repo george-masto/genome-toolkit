@@ -15,7 +15,7 @@
 #   dense genotypes at the score positions from the gVCF's hom-ref blocks (filled
 #   against the reference FASTA) before scoring.
 #
-# VALIDATED PIPELINE (2026-06-30, PGS000018 metaGRS_CAD -> EUR pctile (example result)):
+# VALIDATED PIPELINE (worked example: PGS000018, the Inouye metaGRS_CAD score):
 #   1. Toolchain: JDK17, nextflow (official installer -> tools/nextflow), Miniforge
 #      (~/miniforge3, conda+mamba), plink2 + zstd via conda, bcftools/samtools brew.
 #   2. pgsc_calc (conda profile; the docker daemon won't run headless) downloads +
@@ -47,8 +47,9 @@
 set -uo pipefail
 cat <<'EOF'
 21_prs.sh is the documented canonical PRS pipeline (see header).
-Validated: PGS000018 (Inouye metaGRS_CAD) -> EUR percentile (example result).
-Result served at analysis/calls/prs.json via the MCP tool get_polygenic_scores.
+Validated end-to-end on PGS000018 (Inouye metaGRS_CAD); your own percentile
+lands in analysis/calls/prs.json (gitignored) and is served via the MCP tool
+get_polygenic_scores.
 Per-stage scripts: scripts/_prs/   |   push live: scripts/50_serve_mcp.sh --rebuild
 To add a trait: pick its PGS Catalog id, repeat steps 2-5 with that scorefile.
 EOF

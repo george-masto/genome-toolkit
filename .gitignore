@@ -64,7 +64,8 @@ output/
 results/
 work/
 tmp/
-genome_insights*.json    # structured per-individual insights (served by MCP)
+# structured per-individual insights (served by MCP)
+genome_insights*.json
 
 # --- Third-party callers cloned by the second-pass scripts (code, not data) -
 #  11_cyp2d6.sh / 15_smn.sh / 16_gba.sh clone Cyrius / SMNCopyNumberCaller /
@@ -79,9 +80,20 @@ logs/
 *.flagstat
 *.idxstats
 
-# --- Belt-and-suspenders: anything carrying the sample id or owner name -----
-*SAMPLE_ID*
-*Mastorakos*
+# --- Belt-and-suspenders: personal identifiers (name, sample/order id) ------
+#  Deliberately NOT listed here — hard-coding your name or sample id in a
+#  public .gitignore would leak the very thing it protects. Keep those patterns
+#  in .git/info/exclude (local, never committed); the pre-commit guard loads
+#  extra patterns from .githooks/deny.local (also gitignored) as a second net.
+.githooks/deny.local
+
+# --- Personal per-stage scratch scripts (kept local, not published) ---------
+#  scripts/21_prs.sh is the canonical, documented PRS pipeline. The exact
+#  per-stage scripts that ran on one person's data live here and are personal.
+scripts/_prs/
+
+# --- User's local config (paths to their data) — template is config.example.sh
+config.sh
 
 # --- Environment / OS noise -------------------------------------------------
 .DS_Store

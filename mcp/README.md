@@ -66,6 +66,8 @@ scripts/50_serve_mcp.sh --inspect      # opens the MCP Inspector UI (needs npx)
 | `get_repeat_expansions()` | repeat-disorder genotypes — Huntington, C9orf72, Fragile-X, SCAs… |
 | `get_hla()` | HLA drug-hypersensitivity alleles (abacavir, carbamazepine, allopurinol) |
 | `get_mitochondrial()` | mtDNA haplogroup + MT-RNR1 (aminoglycoside ototoxicity) |
+| `get_polygenic_scores()` | whole-genome polygenic risk-score percentiles (ancestry-matched) |
+| `get_ancestry()` | genetic-ancestry composition — super-population make-up via PCA projection |
 
 The bottom five are empty until the second-pass callers run on the CRAM (see
 [`../docs/SECOND_PASS.md`](../docs/SECOND_PASS.md)); `check_drug` automatically
@@ -78,7 +80,7 @@ auto-restarts the always-on service so new calls go live immediately.
 
 Exact tools (`check_drug`, `search_clinvar`) match keywords. For open-ended
 questions where the words won't appear in your data — *"anything about
-connective tissue?"*, *"heart rhythm"*, *"serotonin"* — build the local
+cholesterol?"*, *"heart rhythm"*, *"serotonin"* — build the local
 semantic index:
 
 ```bash
@@ -101,7 +103,8 @@ tool then ranks your findings by meaning. Rebuild it after re-processing data.
 - "I might be prescribed clopidogrel — any genetic concern?" → `check_drug("clopidogrel")`
 - "What's my APOE status?" → `lookup_variant("rs429358")` + `lookup_variant("rs7412")`
 - "Summarize my pharmacogenomic risks." → `get_pharmacogenomics(actionable_only=True)`
-- "Do I carry anything pathogenic in DYSF?" → `search_clinvar(gene="DYSF")`
+- "Do I carry anything pathogenic in CFTR?" → `search_clinvar(gene="CFTR")`
+- "What's my genetic ancestry make-up?" → `get_ancestry()`
 
 ## Remote / always-on (Tailscale)
 

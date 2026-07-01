@@ -14,6 +14,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# --- User config (optional) -------------------------------------------------
+# The one file most users edit: copy config.example.sh -> config.sh and point
+# DATA_DIR at your data. Sourced here so its values seed the ${VAR:-default}
+# settings below. config.sh uses ": ${VAR:=…}", so environment variables still
+# win over it. config.sh is gitignored (it may hold personal paths).
+if [[ -f "$REPO_ROOT/config.sh" ]]; then
+  # shellcheck source=/dev/null
+  source "$REPO_ROOT/config.sh"
+fi
+
 # DATA_DIR = where the raw .fq.gz / .vcf.gz live. Defaults to repo root
 # (that's where sequencing.com's download landed), override with env var.
 DATA_DIR="${DATA_DIR:-$REPO_ROOT}"
