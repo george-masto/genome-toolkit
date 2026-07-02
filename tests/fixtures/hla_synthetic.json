@@ -1,0 +1,18 @@
+{
+  "_comment": "SYNTHETIC test fixture — a hypothetical DR3/DR4 (DQ2+DQ8) individual. NOT any real person's genotype. Used to exercise the class-II serotype + disease-association logic.",
+  "schema": "genome-call/1",
+  "tool": "T1K",
+  "kind": "hla",
+  "status": "ok",
+  "diplotypes": {
+    "HLA-A": ["HLA-A*01:01", "HLA-A*02:01"],
+    "HLA-B": ["HLA-B*08:01", "HLA-B*44:02"],
+    "HLA-C": ["HLA-C*07:01", "HLA-C*05:01"],
+    "HLA-DRB1": ["HLA-DRB1*03:01", "HLA-DRB1*04:01"],
+    "HLA-DRB3": ["HLA-DRB3*01:01"],
+    "HLA-DRB4": ["HLA-DRB4*01:03"],
+    "HLA-DQA1": ["HLA-DQA1*05:01", "HLA-DQA1*03:01"],
+    "HLA-DQB1": ["HLA-DQB1*02:01", "HLA-DQB1*03:02"],
+    "HLA-DPB1": ["HLA-DPB1*04:01", "HLA-DPB1*04:02"]
+  }
+}

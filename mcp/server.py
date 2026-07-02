@@ -251,16 +251,33 @@ def get_repeat_expansions() -> dict:
 
 @mcp.tool()
 def get_hla() -> dict:
-    """HLA alleles relevant to drug-hypersensitivity pharmacogenetics
-    (HLA-B*57:01 abacavir; B*15:02 / A*31:01 carbamazepine; B*58:01 allopurinol)
-    plus disease-associated HLA. Invisible to a SNP VCF. Empty until
-    scripts/13_hla.sh has run. For a specific drug, prefer check_drug()."""
+    """HLA typing from WGS reads (T1K). Returns both:
+      • hla: drug-hypersensitivity PGx alleles (HLA-B*57:01 abacavir;
+        B*15:02 / A*31:01 carbamazepine; B*58:01 allopurinol).
+      • class-II typing: full class-I + class-II 2-field diplotypes mapped to
+        the familiar SEROTYPES (DR3, DR4, DQ2, DQ8, ...) with disease
+        associations (T1D, celiac permissiveness via DQ2.5/DQ8, MS, narcolepsy,
+        RA). Answers "do I carry DR3/DR4?" and "am I celiac-permissive?".
+    Invisible to a SNP VCF. Empty until scripts/13_hla.sh has run. For a
+    specific drug, prefer check_drug()."""
     if not DATA:
         return _err()
     rows = DATA.get("hla", [])
-    return {"hla": rows,
-            "note": "HLA typed from WGS reads — confirm before acting on a hypersensitivity flag."
-                    if rows else "Not yet computed. Run scripts/13_hla.sh on the CRAM, then rebuild insights."}
+    typing = DATA.get("hla_typing")
+    out = {"hla": rows,
+           "note": "HLA typed from WGS reads — confirm before acting on a hypersensitivity flag."
+                   if rows else "Not yet computed. Run scripts/13_hla.sh on the CRAM, then rebuild insights."}
+    if typing:
+        out.update({
+            "class_i": typing.get("class_i"),
+            "class_ii": typing.get("class_ii"),
+            "dr_serotypes": typing.get("dr_serotypes"),
+            "dq_serotypes": typing.get("dq_serotypes"),
+            "disease_associations": typing.get("disease_associations"),
+            "celiac": typing.get("celiac"),
+            "serotype_summary": typing.get("summary"),
+        })
+    return out
 
 
 @mcp.tool()

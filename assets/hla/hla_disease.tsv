@@ -1,0 +1,28 @@
+# HLA class-II serotype/allele -> disease associations.
+# PUBLIC REFERENCE DATA — no individual's genotype here. EDUCATIONAL ONLY;
+# HLA associations are risk/susceptibility markers, not diagnoses. Most are
+# necessary-not-sufficient: carrying a risk type confers susceptibility, not
+# disease; absence of a *permissive* type (celiac DQ2.5/DQ8) is a strong
+# negative because it is near-obligate.
+#
+# Columns: tokens_all  disease  direction  effect  note  source
+# - tokens_all: comma-separated serotype and/or allele-prefix tokens that must
+#   ALL be present for the association to fire (e.g. "DR3,DR4" = the DR3/DR4
+#   heterozygous genotype; "DQ8" = DQ8 present on either haplotype). Tokens are
+#   matched against the person's derived serotypes AND 2-field alleles.
+# - direction: risk | protective
+# - effect: qualitative strength (very_high | high | moderate | modest)
+tokens_all	disease	direction	effect	note	source
+DR3,DR4	Type 1 diabetes	risk	very_high	The DR3/DR4 heterozygous genotype (DR3-DQ2 + DR4-DQ8) is the highest-risk common T1D genotype.	Erlich et al. 2008 Diabetes; Noble & Valdes 2011
+DR4	Type 1 diabetes	risk	high	DR4-DQ8 haplotype; risk amplified when co-inherited with DR3-DQ2.	Noble & Valdes 2011 Curr Diab Rep
+DR3	Type 1 diabetes	risk	high	DR3-DQ2 haplotype; also broad autoimmune predisposition.	Noble & Valdes 2011
+DR3	Autoimmune (Graves, myasthenia gravis, SLE, Addison, celiac)	risk	moderate	DR3-DQ2 is a shared autoimmune-susceptibility haplotype.	Fernando et al. 2008 PLoS Genet
+DQ2	Celiac disease	risk	high	HLA-DQ2.5 (DQA1*05-DQB1*02) presents gliadin; permissive and near-obligate.	Karell et al. 2003; Sollid 2017
+DQ8	Celiac disease	risk	high	HLA-DQ8 (DQA1*03-DQB1*03:02) is the other permissive heterodimer.	Karell et al. 2003; Sollid 2017
+DRB1*15:01	Multiple sclerosis	risk	high	DR15-DQ6 (DRB1*15:01) is the primary MS-associated class-II allele.	IMSGC 2011 Nature
+DQB1*06:02	Narcolepsy type 1	risk	very_high	DQB1*06:02 present in >95% of narcolepsy-cataplexy; near-obligate.	Mignot et al. 2001 Am J Hum Genet
+DQB1*06:02	Type 1 diabetes	protective	high	DQ6.2 confers dominant protection against T1D.	Pugliese et al. 1995
+DRB1*04:01	Rheumatoid arthritis	risk	high	Shared-epitope allele (QKRAA); anti-CCP+ RA.	Gregersen et al. 1987
+DRB1*04:04	Rheumatoid arthritis	risk	high	Shared-epitope allele.	Gregersen et al. 1987
+DRB1*04:05	Rheumatoid arthritis	risk	moderate	Shared-epitope allele.	Gregersen et al. 1987
+DR15	Goodpasture / anti-GBM disease	risk	high	DRB1*15:01 strongly over-represented in anti-GBM disease.	Phelps & Rees 1999
