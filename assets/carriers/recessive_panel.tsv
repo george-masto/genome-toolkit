@@ -1,0 +1,62 @@
+# Autosomal-recessive (and select X-linked) carrier-screening panel.
+# PUBLIC REFERENCE DATA — no individual's genotype here.
+#
+# Curated set of well-established recessive-disease genes for reproductive
+# carrier screening (ACMG-style + a few high-value additions). The carrier
+# screen (mcp/carrier_screen.py) intersects a person's PATHOGENIC / LIKELY-
+# PATHOGENIC ClinVar hits (from analysis/20_clinvar_all_categorized.tsv) with
+# this gene list and classifies by zygosity:
+#   heterozygous  -> CARRIER (one copy; typically unaffected)
+#   homozygous / 2+ P-LP hits in one gene -> possible BIALLELIC -> clinical review
+# Restricting to a curated recessive panel is deliberate: it keeps the screen
+# clinically meaningful and avoids calling every "pathogenic"-labelled dominant/
+# risk/association variant a "carrier" result.
+#
+# inheritance: AR = autosomal recessive; XLR = X-linked recessive (carrier
+# interpretation differs by sex — flagged in the note).
+#
+# Sources: ACMG carrier-screening recommendations (Gregg et al. 2021 Genet Med);
+# OMIM; GeneReviews. EDUCATIONAL ONLY — confirm any hit with clinical testing +
+# genetic counseling.
+gene	condition	inheritance	note
+CFTR	Cystic fibrosis	AR	Most common AR condition in Europeans (~1/25 carrier).
+HBB	Beta-thalassemia / sickle cell disease	AR	Hemoglobinopathy; panethnic screening.
+HBA1	Alpha-thalassemia	AR	Often deletion-mediated (may be missed by SNV calls).
+HBA2	Alpha-thalassemia	AR	Often deletion-mediated (may be missed by SNV calls).
+HEXA	Tay-Sachs disease	AR	Elevated carrier rate in Ashkenazi, French-Canadian, Cajun.
+SMPD1	Niemann-Pick disease type A/B	AR	Ashkenazi-enriched.
+ASPA	Canavan disease	AR	Ashkenazi-enriched.
+GBA1	Gaucher disease	AR	Also PD risk; note: CN/paralog caller (Gauchian) is the primary GBA1 call.
+GJB2	Nonsyndromic hearing loss (DFNB1)	AR	Most common genetic hearing loss.
+SLC26A4	Pendred syndrome / DFNB4 hearing loss	AR
+USH2A	Usher syndrome type 2 / retinitis pigmentosa	AR
+ABCA4	Stargardt disease	AR
+PAH	Phenylketonuria (PKU)	AR
+GALT	Classic galactosemia	AR
+ATP7B	Wilson disease	AR	Treatable if caught; copper metabolism.
+SERPINA1	Alpha-1 antitrypsin deficiency	AR	PiZZ; lung/liver. Common Z allele (rs28929474).
+DHCR7	Smith-Lemli-Opitz syndrome	AR
+CYP21A2	Congenital adrenal hyperplasia (21-OHD)	AR	Pseudogene-confounded (SNV calls unreliable).
+MCOLN1	Mucolipidosis IV	AR	Ashkenazi-enriched.
+GAA	Pompe disease	AR	Treatable (ERT).
+MMUT	Methylmalonic acidemia	AR
+DLD	Maple syrup urine disease / E3 deficiency	AR
+BCKDHB	Maple syrup urine disease type 1B	AR
+ACADM	MCAD deficiency	AR	Newborn-screened; fatty-acid oxidation.
+CPT2	CPT II deficiency	AR
+ARSA	Metachromatic leukodystrophy	AR
+GLB1	GM1 gangliosidosis	AR
+NPHS1	Congenital nephrotic syndrome (Finnish)	AR
+PKHD1	Autosomal-recessive polycystic kidney disease	AR
+POLG	Mitochondrial DNA depletion / Alpers	AR
+FANCC	Fanconi anemia group C	AR	Ashkenazi-enriched.
+BLM	Bloom syndrome	AR	Ashkenazi-enriched.
+DYSF	Dysferlinopathy (LGMD R2 / Miyoshi myopathy)	AR	Limb-girdle muscular dystrophy 2B.
+CAPN3	Limb-girdle muscular dystrophy R1 (LGMD2A)	AR
+SGCA	Limb-girdle muscular dystrophy R3 (LGMD2D)	AR
+RAPSN	Congenital myasthenic syndrome	AR
+MEFV	Familial Mediterranean fever	AR	Mediterranean; some alleles dominant-acting.
+PMM2	PMM2-CDG (congenital disorder of glycosylation)	AR
+F5	Factor V deficiency	AR	(Distinct from the dominant Factor V Leiden thrombophilia.)
+DMD	Duchenne/Becker muscular dystrophy	XLR	Female carriers usually unaffected; sons 50% risk.
+G6PD	G6PD deficiency	XLR	Drug/fava hemolysis; X-linked dose effect.

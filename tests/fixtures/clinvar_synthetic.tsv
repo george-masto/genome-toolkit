@@ -1,0 +1,7 @@
+1_Pathogenic	2	7	117559590	CFTR	rs113993960	CTT/C	het	Pathogenic	Cystic fibrosis
+1_Pathogenic	2	15	72346580	HEXA	rs121907954	G/G	hom	Pathogenic	Tay-Sachs disease
+1_Pathogenic	1	2	71680000	DYSF	rs900000001	A/G	het	Pathogenic	Dysferlinopathy
+1_Pathogenic	2	2	71690000	DYSF	rs900000002	C/T	het	Likely_pathogenic	Dysferlinopathy
+1_Pathogenic	0	7	117560000	CFTR	rs900000003	A/G	het	Pathogenic	Cystic fibrosis low-confidence
+9_Benign	2	1	942451	SAMD11	rs6672356	C/C	hom	Benign	-
+1_Pathogenic	3	17	43094464	BRCA1	rs80357906	A/G	het	Pathogenic	Hereditary breast/ovarian cancer
