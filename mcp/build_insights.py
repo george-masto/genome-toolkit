@@ -428,6 +428,18 @@ def build_advanced(calls):
     return sections
 
 
+def build_carrier_screen():
+    """SNV-based recessive carrier screen: intersect this person's pathogenic /
+    likely-pathogenic ClinVar hits with a curated recessive-gene panel and
+    classify by zygosity. Complements the CN-based carrier_status (GBA/SMN).
+    Returns None if the categorized ClinVar table hasn't been built."""
+    if not CLINVAR_TSV.exists():
+        return None
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import carrier_screen
+    return carrier_screen.summarize(CLINVAR_TSV)
+
+
 def build_second_pass_summary(calls):
     """What of the CRAM-based specialty panel has actually been run vs is pending.
     Lets an agent see at a glance whether e.g. CYP2D6 is a real call yet."""
@@ -459,6 +471,7 @@ def main():
 
     calls = load_calls()           # second-pass specialty-caller outputs, if any
     advanced = build_advanced(calls)
+    carrier_screen = build_carrier_screen()   # SNV recessive carrier screen (ClinVar x panel)
     _anc = calls.get("ancestry")   # scripts/30_ancestry.sh — genetic-ancestry composition
     ancestry = _anc if isinstance(_anc, dict) and _anc.get("status") == "ok" else None
 
@@ -475,6 +488,7 @@ def main():
         "pharmacogenomics": build_pgx(found, calls.get("cyp2d6")),
         "clinvar": build_clinvar(),
         "carrier_status": advanced["carrier_status"],
+        "carrier_screen": carrier_screen,
         "repeat_expansions": advanced["repeat_expansions"],
         "hla": advanced["hla"],
         "mito": advanced["mito"],

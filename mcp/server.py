@@ -236,6 +236,24 @@ def get_carrier_status() -> dict:
 
 
 @mcp.tool()
+def get_carrier_screen() -> dict:
+    """SNV-based recessive carrier screen: this person's pathogenic / likely-
+    pathogenic ClinVar hits intersected with a curated autosomal-recessive gene
+    panel (CFTR, HBB, DYSF, HEXA, ...), classified by zygosity — heterozygous =
+    carrier, homozygous / 2+ hits in a gene = possible biallelic (affected),
+    flagged for clinical review. Complements get_carrier_status (which is the
+    copy-number callers, SMN1/GBA). Answers "what recessive conditions am I a
+    carrier for?". Misses CNV/deletion carriers and can't phase compound hets."""
+    if not DATA:
+        return _err()
+    cs = DATA.get("carrier_screen")
+    if not cs:
+        return {"note": "Not yet computed. Needs analysis/20_clinvar_all_categorized.tsv "
+                        "(run the ClinVar screen), then rebuild insights."}
+    return cs
+
+
+@mcp.tool()
 def get_repeat_expansions() -> dict:
     """Repeat-expansion disorder genotypes (HTT/Huntington, C9orf72/ALS-FTD,
     FMR1/Fragile-X, DM1, SCAs, Friedreich's) from ExpansionHunter. These STR loci
