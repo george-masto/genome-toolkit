@@ -428,6 +428,21 @@ def build_advanced(calls):
     return sections
 
 
+def build_hla_typing(hla_call):
+    """Surface T1K's full class-I + class-II diplotypes as clinician-facing
+    serotypes (DR3, DR4, DQ2, DQ8, ...) plus the well-established class-II
+    disease associations. T1K already types every HLA gene; 13_hla.sh keeps only
+    the PGx alleles, so this re-reads the diplotypes it already produced — no
+    extra caller run. Returns None if HLA hasn't been typed yet."""
+    if not isinstance(hla_call, dict) or not hla_call.get("diplotypes"):
+        return None
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import hla_serotypes
+    typing = hla_serotypes.summarize(hla_call["diplotypes"])
+    typing["diplotypes"] = hla_call["diplotypes"]
+    return typing
+
+
 def build_second_pass_summary(calls):
     """What of the CRAM-based specialty panel has actually been run vs is pending.
     Lets an agent see at a glance whether e.g. CYP2D6 is a real call yet."""
@@ -459,6 +474,7 @@ def main():
 
     calls = load_calls()           # second-pass specialty-caller outputs, if any
     advanced = build_advanced(calls)
+    hla_typing = build_hla_typing(calls.get("hla"))   # class-II serotypes (DR/DQ) + disease
     _anc = calls.get("ancestry")   # scripts/30_ancestry.sh — genetic-ancestry composition
     ancestry = _anc if isinstance(_anc, dict) and _anc.get("status") == "ok" else None
 
@@ -477,6 +493,7 @@ def main():
         "carrier_status": advanced["carrier_status"],
         "repeat_expansions": advanced["repeat_expansions"],
         "hla": advanced["hla"],
+        "hla_typing": hla_typing,
         "mito": advanced["mito"],
         "advanced_pgx": advanced["advanced_pgx"],
         "polygenic_scores": advanced["polygenic_scores"],

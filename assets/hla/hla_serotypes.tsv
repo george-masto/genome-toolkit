@@ -1,0 +1,49 @@
+# HLA class-II allele-group -> serotype map.
+# PUBLIC REFERENCE DATA — no individual's genotype here.
+#
+# Maps a 2-field (or allele-group) HLA class-II allele to its WHO/IMGT serotype
+# equivalent, so a molecular type (e.g. HLA-DRB1*03:01) can be reported as the
+# clinically familiar serotype (DR3). Matching is by locus + first field
+# ("allele group"), except where a serotype split hinges on the second field
+# (the DQB1*03 group: *03:01=DQ7, *03:02=DQ8, *03:03=DQ9), which are listed
+# explicitly and take precedence over the group default.
+#
+# Columns: locus  allele_prefix  serotype  broad_group  notes
+# - allele_prefix matches against the allele string after "HLA-" (e.g. "DRB1*03",
+#   "DQB1*03:02"); the LONGEST matching prefix wins.
+# - broad_group is the older broad antigen the split belongs to (blank if none).
+#
+# Sources: WHO Nomenclature Committee for Factors of the HLA System; IMGT/HLA
+# (hla.alleles.org); Holdsworth et al. "The HLA dictionary 2008" (Tissue Antigens).
+locus	allele_prefix	serotype	broad_group	notes
+DRB1	DRB1*01	DR1
+DRB1	DRB1*03	DR3		splits DR17/DR18
+DRB1	DRB1*04	DR4
+DRB1	DRB1*07	DR7
+DRB1	DRB1*08	DR8
+DRB1	DRB1*09	DR9
+DRB1	DRB1*10	DR10
+DRB1	DRB1*11	DR11	DR5
+DRB1	DRB1*12	DR12	DR5
+DRB1	DRB1*13	DR13	DR6
+DRB1	DRB1*14	DR14	DR6
+DRB1	DRB1*15	DR15	DR2
+DRB1	DRB1*16	DR16	DR2
+# DR51/52/53 group secondary DRB loci (present with specific DR types)
+DRB3	DRB3	DR52		on DR3/DR11/DR12/DR13/DR14 haplotypes
+DRB4	DRB4	DR53		on DR4/DR7/DR9 haplotypes
+DRB5	DRB5	DR51		on DR15/DR16 haplotypes
+# DQB1 -> DQ serotype (second-field splits of the DQ3 broad antigen)
+DQB1	DQB1*02	DQ2
+DQB1	DQB1*03	DQ3		broad; see splits below
+DQB1	DQB1*03:01	DQ7	DQ3
+DQB1	DQB1*03:02	DQ8	DQ3
+DQB1	DQB1*03:03	DQ9	DQ3
+DQB1	DQB1*04	DQ4
+DQB1	DQB1*05	DQ5	DQ1
+DQB1	DQB1*06	DQ6	DQ1
+# DQA1 (needed to resolve the celiac-relevant DQ2.5 / DQ8 heterodimers)
+DQA1	DQA1*01	DQA1*01
+DQA1	DQA1*02	DQA1*02
+DQA1	DQA1*03	DQA1*03		pairs with DQB1*03:02 -> DQ8
+DQA1	DQA1*05	DQA1*05		pairs with DQB1*02 -> DQ2.5 (cis or trans)
