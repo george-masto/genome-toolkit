@@ -109,3 +109,6 @@ conda-env/
 #    assets/traits/*.tsv  curated public rsID→trait maps (committed on purpose)
 #  These are *.tsv and not matched by any deny rule above.
 # ============================================================================
+
+# Large public reference panels (HGDP+1kGP, PGS Catalog) - download, never commit
+reference/
